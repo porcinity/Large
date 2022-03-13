@@ -1,3 +1,5 @@
+package repo.BlogsRepo
+
 import cats.effect.{MonadCancelThrow, Resource}
 import doobie.Transactor
 import doobie.hikari.HikariTransactor
