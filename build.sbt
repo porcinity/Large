@@ -23,5 +23,7 @@ lazy val root = project
       "org.http4s"     %% "http4s-dsl"          % Http4sVersion,
 
       "io.circe"       %% "circe-generic"       % CirceVersion,
+
+      "com.lorandszakacs" %% "sprout" % "0.0.5"
     )
 )

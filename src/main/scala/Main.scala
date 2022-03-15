@@ -30,9 +30,9 @@ object Main extends IOApp:
       blogs <- blogsRepo.findAll
       _ <- IO.println(s"These are the blogs: $blogs")
 
-      ser = new BlogService(blogsRepo)
+      blogService = new BlogService(blogsRepo)
       httpApp = Router(
-        "/blogs" -> ser.routes
+        "/blogs" -> blogService.routes
       ).orNotFound
       server <- BlazeServerBuilder[IO](global)
         .bindHttp(8080, "localhost")
@@ -43,4 +43,3 @@ object Main extends IOApp:
     } yield server
 
     program.as(ExitCode.Success)
-//    program.as(ExitCode.Success)

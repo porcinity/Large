@@ -1,43 +1,50 @@
 import cats.Monad
 import cats.effect.{IO, Sync}
-import cats._
-import cats.syntax.option._
+import cats.*
+import org.http4s.{EntityDecoder, EntityEncoder}
+//import cats.syntax.option._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-//import org.http4s.circe._
+import org.http4s.circe._
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
-import repo.BlogsRepo.{Blog, Blogs}
+import repo.BlogsRepo.{Blog, Blogs, BlogId, TestSprout}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import io.circe.*
+import repo.BlogsRepo.BlogId._
+
 
 class BlogService(repository: Blogs[IO]) extends Http4sDsl[IO] {
   //  import io.circe._, io.circe.generic.semiauto._
   //
-  //  implicit val fooEncoder: Encoder[Blog] = deriveEncoder[Blog]
-  //  implicit val fooDecoder: Decoder[Blog] = deriveDecoder[Blog]
+//    implicit val fooEncoder: Encoder[TestSprout] = deriveEncoder[TestSprout]
+//    implicit val fooDecoder: Decoder[Blog] = deriveDecoder[Blog]
+
+//  implicit val encoder: Encoder[TestSprout] = Encoder[TestSprout].contramap(x => x)
+//  implicit val decoder: Decoder[TestSprout] = Decoder[String].map(TestSprout(_))
+//  implicit val entityEncoder: EntityEncoder[IO, TestSprout] = jsonEncoderOf[IO, TestSprout]
+//  implicit val entityDecoder: EntityDecoder[IO, TestSprout] = jsonOf[IO, TestSprout]
 
   val routes = HttpRoutes.of[IO] {
-    case GET -> Root => for {
-      x <- repository.findAll
-      y <- Ok(x)
-    } yield y
+    case GET -> Root =>
+      for {
+        x <- repository.findAll
+        y <- Ok(x)
+      } yield y
 
     case GET -> Root / IntVar(id) =>
-      val res = for {
+      for {
         b <- repository.findById(id)
-        res = b.fold(NotFound())(x =>Ok(x))
-      } yield b.getOrElse(Blog(33, "", ""))
-      Ok(res)
+        res <- b.fold(NotFound())(Ok(_))
+      } yield res
+
+    case GET -> Root / "rich" / IntVar(id) =>
+      for {
+        b <- repository.findRichIdById(id)
+        res <- b.fold(NotFound())(Ok(_))
+      } yield res
   }
-
-
-  //      repository.findById(1).flatMap(x => x.fold(NotFound)(x=>Ok(x)))
-
-  //      for {
-  //      l <- repository.findById(1)
-  //      res = l.map(_.toJson)
-  //    } yield res
 }
+
 
