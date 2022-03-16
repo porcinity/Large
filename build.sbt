@@ -24,6 +24,6 @@ lazy val root = project
 
       "io.circe"       %% "circe-generic"       % CirceVersion,
 
-      "com.lorandszakacs" %% "sprout" % "0.0.5"
+      "com.lorandszakacs" %% "sprout" % "0.0.5",
     )
 )
