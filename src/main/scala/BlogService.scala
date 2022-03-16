@@ -5,7 +5,7 @@ import cats.effect.{Concurrent, IO, Sync}
 import cats.*
 import doobie.{Meta, Read}
 import io.circe.generic.semiauto.deriveCodec
-import org.http4s.Status.Ok
+import org.http4s.Status.{Created, NoContent, Ok}
 import org.http4s.{EntityDecoder, EntityEncoder}
 import repo.BlogsRepo.Blogs
 //import cats.syntax.option._
@@ -54,6 +54,19 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
 
     case GET -> Root => Ok(repository.findAllKewlBlogs)
 
-    case GET -> Root / IntVar(id) => Ok(repository.findKewlBlogById(id))
+    case GET -> Root / IntVar(id) =>
+      for {
+        blog <- repository.findKewlBlogById(id)
+        res <- blog.fold(NotFound())(Ok(_))
+      } yield res
+
+    case req @ POST -> Root =>
+      for {
+        kewl <- req.decodeJson[KewlBlog]
+        _ <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
+        res <- Created()
+      } yield res
+
+    case DELETE -> Root / IntVar(id) => Ok(repository.delete(id))
   }
 }
