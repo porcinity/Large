@@ -1,6 +1,6 @@
 package models
 
-import doobie.Read
+import doobie.{Read, Write}
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 
@@ -16,11 +16,12 @@ object KewlBlog:
 
   object KewlTitle:
     def apply(value: String): KewlTitle = value
+  extension (x: KewlTitle)
+    def value: String = x
 
   opaque type KewlContent = String
-
-  object KewlContent:
-    def apply(value: String): KewlContent = value
+  def KewlContent(value: String): KewlContent = value
+  extension (x: KewlContent) def v: String = x
 
   case class KewlBlog(id: KewlId, title: KewlTitle, content: KewlContent)
 
@@ -29,3 +30,7 @@ object KewlBlog:
     implicit val kewlBlogRead: Read[KewlBlog] =
       Read[(Int, String, String)].map { case (id, title, content) =>
         KewlBlog(KewlId(id), KewlTitle(title), KewlContent(content)) }
+    implicit val kewlBlogWrite: Write[KewlBlog] =
+      Write[(Int, String, String)].contramap { kewlblog =>
+        (kewlblog.id.value, kewlblog.title.value, kewlblog.content.v)
+      }
