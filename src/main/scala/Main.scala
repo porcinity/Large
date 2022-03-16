@@ -26,7 +26,7 @@ object Main extends IOApp:
 
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
-    val program: IO[Unit] = for {
+    for {
       rich <- blogsRepo.findAllKewlBlogs
       _ <- IO.println(s"here is that rich rich: $rich")
 
@@ -42,4 +42,4 @@ object Main extends IOApp:
         .as(ExitCode.Success)
     } yield server
 
-    program.as(ExitCode.Success)
+//    program.as(ExitCode.Success)

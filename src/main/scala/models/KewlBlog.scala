@@ -27,4 +27,5 @@ object KewlBlog:
   object KewlBlog:
     implicit val kewlCodec: Codec[KewlBlog] = deriveCodec[KewlBlog]
     implicit val kewlBlogRead: Read[KewlBlog] =
-      Read[(Int, String, String)].map { case (id, title, content) => KewlBlog(KewlId(id), KewlTitle(title), KewlContent(content)) }
+      Read[(Int, String, String)].map { case (id, title, content) =>
+        KewlBlog(KewlId(id), KewlTitle(title), KewlContent(content)) }
