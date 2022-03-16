@@ -1,6 +1,7 @@
 import cats.effect.{ExitCode, IO, IOApp, Resource, Sync}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
+import models.KewlBlog._
 import org.http4s.HttpRoutes
 import org.http4s.Status.Ok
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -26,9 +27,12 @@ object Main extends IOApp:
 
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
+    val saveMe = KewlBlog(KewlId(6969), KewlTitle("hiiii"), KewlContent("put it itb"))
+
     for {
       rich <- blogsRepo.findAllKewlBlogs
       _ <- IO.println(s"here is that rich rich: $rich")
+//      _ <- blogsRepo.create(saveMe.id.value, saveMe.title.value, saveMe.content.content)
 
       blogService = new BlogService(blogsRepo)
       httpApp = Router(
@@ -41,5 +45,3 @@ object Main extends IOApp:
         .use(_ => IO.never)
         .as(ExitCode.Success)
     } yield server
-
-//    program.as(ExitCode.Success)
