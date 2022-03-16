@@ -27,10 +27,8 @@ object Main extends IOApp:
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
     val program: IO[Unit] = for {
-      blogs <- blogsRepo.findAll
-      _ <- IO.println(s"These are the blogs: $blogs")
-//      rich <- blogsRepo.findAllRichBlogs()
-//      _ <- IO.println(s"here is that rich rich: $rich")
+      rich <- blogsRepo.findAllKewlBlogs
+      _ <- IO.println(s"here is that rich rich: $rich")
 
       blogService = new BlogService(blogsRepo)
       httpApp = Router(
