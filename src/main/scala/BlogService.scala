@@ -39,7 +39,6 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
     KewlBlog(KewlId(2), KewlTitle("itb pt 2"), KewlContent("sfdfs"))
   )
 
-
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root / "peeps" => Ok(peeps)
@@ -52,9 +51,6 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
     case DELETE -> Root / "peeps" / IntVar(id) => Ok(peeps.filter(_.id.value != id))
 
     case GET -> Root / "peeps" / IntVar(id) => Ok(peeps.find(_.id.value == id))
-
-    case GET -> Root / "kewl" => Ok(kewlList)
-    case GET -> Root / "kewl" / IntVar(id) => Ok(kewlList.find(_.id.value == id))
 
     case GET -> Root => Ok(repository.findAllKewlBlogs)
 
