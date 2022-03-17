@@ -27,17 +27,13 @@ object Main extends IOApp:
 
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
-    val saveMe = KewlBlog(KewlId(6969), KewlTitle("hiiii"), KewlContent("put it itb"))
+    val blogService: BlogService[IO] = new BlogService(blogsRepo)
+
+    val httpApp = Router(
+      "/blogs" -> blogService.routes
+    ).orNotFound
 
     for {
-      rich <- blogsRepo.findAllKewlBlogs
-      _ <- IO.println(s"here is that rich rich: $rich")
-//      _ <- blogsRepo.create(saveMe.id.value, saveMe.title.value, saveMe.content.content)
-
-      blogService = new BlogService(blogsRepo)
-      httpApp = Router(
-        "/blogs" -> blogService.routes
-      ).orNotFound
       server <- BlazeServerBuilder[IO](global)
         .bindHttp(8080, "localhost")
         .withHttpApp(httpApp)
