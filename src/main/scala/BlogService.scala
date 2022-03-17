@@ -55,6 +55,10 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
         res <- Created()
       } yield res
 
-    case DELETE -> Root / IntVar(id) => Ok(repository.delete(id))
+    case DELETE -> Root / IntVar(id) =>
+      for {
+        res <- repository.delete(id)
+        y <- res.fold(_ => NotFound(), _ => NoContent())
+      } yield y
   }
 }
