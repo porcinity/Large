@@ -51,8 +51,8 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
     case req @ POST -> Root =>
       for {
         kewl <- req.decodeJson[KewlBlog]
-        _ <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
-        res <- Created()
+        newId <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
+        res <- Created(newId)
       } yield res
 
     case DELETE -> Root / IntVar(id) =>
