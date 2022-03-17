@@ -40,18 +40,6 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
   )
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-
-    case GET -> Root / "peeps" => Ok(peeps)
-    case req @ POST -> Root / "peeps" =>
-      for {
-        user <- req.decodeJson[Person]
-        resp <- Ok(peeps.concat(List(user)))
-      } yield resp
-
-    case DELETE -> Root / "peeps" / IntVar(id) => Ok(peeps.filter(_.id.value != id))
-
-    case GET -> Root / "peeps" / IntVar(id) => Ok(peeps.find(_.id.value == id))
-
     case GET -> Root => Ok(repository.findAllKewlBlogs)
 
     case GET -> Root / IntVar(id) =>
