@@ -17,7 +17,7 @@ trait Blogs[F[_]]:
   def findAllKewlBlogs: F[List[KewlBlog]]
   def findKewlBlogById(id: Int): F[Option[KewlBlog]]
   def create(id: Int, title: String, content: String): F[Int]
-  def delete(id: Int): F[Int]
+  def delete(id: Int): F[Either[String, Int]]
 
 object Blogs:
   def make[F[_]: Concurrent](postgres: Resource[F, Transactor[F]]): Blogs[F] =
@@ -34,8 +34,12 @@ object Blogs:
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)".update.withUniqueGeneratedKeys[Int]("post_id").transact(xa)
       }
 
-      override def delete(id: Int): F[Int] = postgres.use { xa =>
-        sql"delete from junk where post_id = $id".update.run.transact(xa)
+      import cats.syntax.functor.*
+      override def delete(id: Int): F[Either[String, Int]] = postgres.use { xa =>
+        sql"delete from junk where post_id = $id".update.run.transact(xa).map { x =>
+          if (x == 0) Left("Blog not found.")
+          else Right(x)
+        }
       }
 
     }
