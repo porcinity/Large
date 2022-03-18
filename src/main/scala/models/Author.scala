@@ -8,11 +8,11 @@ object Author:
   implicit val authorCodec: Codec[Author] = deriveCodec[Author]
 //  implicit val emailCodec: Decoder[Email] = deriveDecoder[Email]
   implicit val authorRead: Read[Author] =
-    Read[(Int, String)].map { case (id, name) =>
+    Read[(Int, String, String)].map { case (id, name, email) =>
 //      val status = VerificationStatus.fromString(emailStatus)
       // , Email(EmailAddress(emailAddress), EmailVerification(emailStatus))
 //      val email = Email(EmailAddress(emailAdd), EmailVerification(verified))
-      Author(AuthorId(id), Name(name))
+      Author(AuthorId(id), Name(name), EmailAddress(email))
     }
 
   opaque type Name = String
@@ -59,4 +59,4 @@ object Author:
 
   case class Email(address: EmailAddress, verified: EmailVerification)
 
-  case class Author(id: AuthorId, name: Name)
+  case class Author(id: AuthorId, name: Name, emailAddress: EmailAddress)
