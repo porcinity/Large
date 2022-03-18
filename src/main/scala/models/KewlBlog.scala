@@ -25,12 +25,11 @@ object KewlBlog:
 
   case class KewlBlog(id: KewlId, title: KewlTitle, content: KewlContent)
 
-  object KewlBlog:
-    implicit val kewlCodec: Codec[KewlBlog] = deriveCodec[KewlBlog]
-    implicit val kewlBlogRead: Read[KewlBlog] =
-      Read[(Int, String, String)].map { case (id, title, content) =>
-        KewlBlog(KewlId(id), KewlTitle(title), KewlContent(content)) }
-    implicit val kewlBlogWrite: Write[KewlBlog] =
-      Write[(Int, String, String)].contramap { kewlblog =>
-        (kewlblog.id.value, kewlblog.title.value, kewlblog.content.v)
-      }
+  implicit val kewlCodec: Codec[KewlBlog] = deriveCodec[KewlBlog]
+  implicit val kewlBlogRead: Read[KewlBlog] =
+    Read[(Int, String, String)].map { case (id, title, content) =>
+      KewlBlog(KewlId(id), KewlTitle(title), KewlContent(content)) }
+  implicit val kewlBlogWrite: Write[KewlBlog] =
+    Write[(Int, String, String)].contramap { kewlblog =>
+      (kewlblog.id.value, kewlblog.title.value, kewlblog.content.v)
+    }
