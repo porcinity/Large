@@ -33,8 +33,8 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
 
     case req @ PUT -> Root / IntVar(id) =>
       for {
-        kewl <- req.decodeJson[KewlBlog]
-        newId <- repository.update(kewl.id.value, kewl.title.value, kewl.content.v)
+        kewl <- req.decodeJson[KewlBlogDto]
+        newId <- repository.update(id, kewl.title, kewl.content)
         res <- Created(newId)
       } yield res
 
