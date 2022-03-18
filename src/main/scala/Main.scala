@@ -1,13 +1,13 @@
 import cats.effect.{ExitCode, IO, IOApp, Resource, Sync}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import models.KewlBlog._
+import models.KewlBlog.*
 import org.http4s.HttpRoutes
 import org.http4s.Status.Ok
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.dsl.io.{GET, Root}
 import org.http4s.server.Router
-import repo.BlogsRepo.Blogs
+import repositories.Blogs
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
