@@ -1,17 +1,13 @@
 package repo.BlogsRepo
 
-import cats.effect.{Concurrent, IO, MonadCancelThrow, Resource, Sync}
+import cats.effect.{Concurrent, Resource}
 import doobie.Transactor
 import doobie.hikari.HikariTransactor
 import doobie.implicits.*
 import doobie.*
 import doobie.postgres.*
 import doobie.postgres.implicits.*
-import io.circe.{Codec, Decoder, Encoder}
-import io.circe.generic.auto.deriveEncoder
-import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import models.KewlBlog.*
-import org.http4s.EntityEncoder
 
 // This is needed to use map on F in the repository methods
 import cats.syntax.functor.*
