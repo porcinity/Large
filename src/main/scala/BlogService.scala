@@ -9,11 +9,6 @@ import org.http4s.implicits._
 import org.http4s.syntax._
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 
-
-//import org.http4s.{EntityDecoder, EntityEncoder}
-//import io.circe.syntax.*
-//import io.circe.*
-
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap._
 import cats.syntax.functor._
