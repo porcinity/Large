@@ -1,4 +1,4 @@
-package repo.BlogsRepo
+package repositories
 
 import cats.effect.{Concurrent, Resource}
 import doobie.Transactor
