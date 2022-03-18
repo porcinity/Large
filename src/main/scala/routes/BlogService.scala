@@ -1,17 +1,19 @@
-import models.KewlBlog.*
+package routes
+
 import cats.effect.Concurrent
-import org.http4s.Status.{Created, NoContent, Ok}
+import models.KewlBlog.*
 import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
+import org.http4s.Status.{Created, NoContent, Ok}
 import org.http4s.circe.*
+import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
+import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import repositories.Blogs
 
 // These are necessary to use for-comprehensions on F
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 
 // The type constraint of Concurrent is necessary to decode Json
 class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
