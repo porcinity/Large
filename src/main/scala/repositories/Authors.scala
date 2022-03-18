@@ -18,7 +18,7 @@ object Authors:
   def make[F[_]: Concurrent](postgres: Resource[F, Transactor[F]]): Authors[F] =
     new Authors[F] {
       override def findAllAuthors: F[List[Author]] = postgres.use { xa =>
-        sql"select author_id, author_name, author_email, author_emailStatus from authors".query[Author].to[List].transact(xa)
+        sql"select author_id, author_name from authors".query[Author].to[List].transact(xa)
       }
 
 //      override def findAuthorById(id: Int): F[Option[Author]] = ???

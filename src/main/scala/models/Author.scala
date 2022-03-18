@@ -1,15 +1,18 @@
 package models
 
 import doobie.Read
-import io.circe.Codec
-import io.circe.generic.semiauto.deriveCodec
+import io.circe.{Codec, Decoder}
+import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 
 object Author:
   implicit val authorCodec: Codec[Author] = deriveCodec[Author]
+//  implicit val emailCodec: Decoder[Email] = deriveDecoder[Email]
   implicit val authorRead: Read[Author] =
-    Read[(Int, String, String, String)].map { case (id, name, emailAddress, emailStatus) =>
-      val status = VerificationStatus.fromString(emailStatus)
-      Author(AuthorId(id), Name(name), Email(EmailAddress(emailAddress), status))
+    Read[(Int, String)].map { case (id, name) =>
+//      val status = VerificationStatus.fromString(emailStatus)
+      // , Email(EmailAddress(emailAddress), EmailVerification(emailStatus))
+//      val email = Email(EmailAddress(emailAdd), EmailVerification(verified))
+      Author(AuthorId(id), Name(name))
     }
 
   opaque type Name = String
@@ -41,15 +44,19 @@ object Author:
   object EmailAddress:
     def apply(value: String): EmailAddress = value
 
+  opaque type EmailVerification = String
+  object EmailVerification:
+    def apply(value: String): EmailVerification = value
+
   enum VerificationStatus:
     case Verified
     case Unverified
-    
+
   object VerificationStatus:
     def fromString(string: String): VerificationStatus = string match
       case "Unverified" => VerificationStatus.Unverified
       case "Verified" => VerificationStatus.Verified
 
-  case class Email(address: EmailAddress, verified: VerificationStatus)
+  case class Email(address: EmailAddress, verified: EmailVerification)
 
-  case class Author(id: AuthorId, name: Name, email: Email)
+  case class Author(id: AuthorId, name: Name)
