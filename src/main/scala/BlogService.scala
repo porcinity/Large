@@ -1,13 +1,13 @@
 import models.KewlBlog.*
 import cats.effect.Concurrent
 import org.http4s.Status.{Created, NoContent, Ok}
-import repo.BlogsRepo.Blogs
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-import org.http4s.circe._
-import org.http4s.implicits._
-import org.http4s.syntax._
+import org.http4s.circe.*
+import org.http4s.implicits.*
+import org.http4s.syntax.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
+import repositories.Blogs
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap._
