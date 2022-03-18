@@ -8,7 +8,7 @@ import io.circe.generic.semiauto.deriveCodec
 import org.http4s.Status.{Created, NoContent, Ok}
 import org.http4s.{EntityDecoder, EntityEncoder}
 import repo.BlogsRepo.Blogs
-//import cats.syntax.option._
+import cats.syntax.option._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
