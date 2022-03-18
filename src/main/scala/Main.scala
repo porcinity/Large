@@ -7,7 +7,8 @@ import org.http4s.Status.Ok
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.dsl.io.{GET, Root}
 import org.http4s.server.Router
-import repositories.Blogs
+import repositories.{Authors, Blogs}
+import routes.{AuthorService, BlogService}
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
@@ -27,10 +28,15 @@ object Main extends IOApp:
 
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
+    val authorRepo: Authors[IO] = Authors.make(postgres)
+
     val blogService: BlogService[IO] = new BlogService(blogsRepo)
 
+    val authorService: AuthorService[IO] = new AuthorService(authorRepo)
+
     val httpApp = Router(
-      "/blogs" -> blogService.routes
+      "/blogs" -> blogService.routes,
+      "/authors" -> authorService.routes
     ).orNotFound
 
     for {
