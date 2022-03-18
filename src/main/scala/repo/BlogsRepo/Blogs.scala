@@ -2,7 +2,6 @@ package repo.BlogsRepo
 
 import cats.effect.{Concurrent, Resource}
 import doobie.Transactor
-import doobie.hikari.HikariTransactor
 import doobie.implicits.*
 import doobie.*
 import doobie.postgres.*
