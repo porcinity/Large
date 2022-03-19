@@ -1,9 +1,8 @@
 package models
 
-import doobie.Read
+import doobie.{Read, Write}
 import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
-
 import io.circe.syntax.*
 import io.circe.generic.auto.*
 
@@ -21,6 +20,10 @@ object Author:
       val hmm = EmailVerification.cake("")
       val email = Email(EmailAddress(emailAdd), status)
       Author(AuthorId(id), Name(name), email)
+    }
+  implicit val authorWrite: Write[Author] =
+    Write[(Int, String, String, String)].contramap { author =>
+      (author.id.value, author.name.value, author.email.address.value, author.email.status.value)
     }
 
   opaque type Name = String
@@ -51,6 +54,7 @@ object Author:
   opaque type EmailAddress = String
   object EmailAddress:
     def apply(value: String): EmailAddress = value
+  extension (x: EmailAddress) def value: String = x
 
   opaque type EmailVerification = String
   object EmailVerification:
@@ -63,6 +67,7 @@ object Author:
       case "verified" => new EmailVerification("Verified")
       case _ => new EmailVerification("Unverified")
     }
+    extension (x: EmailVerification) def value: String = x
 
 //  enum VerificationStatus:
 //    case Verified
@@ -77,6 +82,6 @@ object Author:
       case "Unverified" => Unverified("Unverified")
       case "Verified" => Verified()
 
-  case class Email(address: EmailAddress, emailStatus: EmailVerification)
+  case class Email(address: EmailAddress, status: EmailVerification)
 
   case class Author(id: AuthorId, name: Name, email: Email)
