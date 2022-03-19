@@ -28,8 +28,9 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
 
     case req @ POST -> Root =>
       for {
-        kewl <- req.decodeJson[KewlBlog]
-        kewB <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
+        kewl <- req.decodeJson[KewlBlogDto]
+        kewDomain = KewlBlogDto.toDomain(kewl)
+        kewB <- repository.insertKewB(kewDomain)
         res <- Created(kewB)
       } yield res
 
