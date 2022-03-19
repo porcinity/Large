@@ -7,6 +7,7 @@ import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
+import org.http4s.Status.{Created, NoContent, Ok}
 import repositories.Authors
 import models.Author.*
 
@@ -29,5 +30,11 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
         a <- repository.create(author)
         res <- Created(a)
       } yield res
+
+    case DELETE -> Root / IntVar(id) =>
+      for {
+        res <- repository.delete(id)
+        y <- res.fold(_ => NotFound(), _ => NoContent())
+      } yield y
   }
 }
