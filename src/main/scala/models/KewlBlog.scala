@@ -44,3 +44,6 @@ object KewlBlog:
   
   object KewlBlogDto:
     implicit val dtoCodec: Codec[KewlBlogDto] = deriveCodec[KewlBlogDto]
+    def toDomain(dto: KewlBlogDto): KewlBlog =
+      val r = scala.util.Random.nextInt(99999)
+      KewlBlog(KewlId(r),KewlTitle(dto.title), KewlContent(dto.content))
