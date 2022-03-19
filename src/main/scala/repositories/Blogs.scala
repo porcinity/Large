@@ -14,7 +14,7 @@ import cats.syntax.functor.*
 trait Blogs[F[_]]:
   def findAllKewlBlogs: F[List[KewlBlog]]
   def findKewlBlogById(id: Int): F[Option[KewlBlog]]
-  def create(id: Int, title: String, content: String): F[(Int, String, String)]
+  def create(id: Int, title: String, content: String): F[KewlBlog]
   def update(id: Int, title: String, content: String): F[Int]
   def delete(id: Int): F[Either[String, Int]]
 
@@ -30,9 +30,9 @@ object Blogs:
         sql"select post_id, post_title, post_content from junk where post_id = $id ".query[KewlBlog].option.transact(xa)
       }
 
-      override def create(id: Int, title: String, content: String): F[(Int, String, String)] = postgres.use { xa =>
+      override def create(id: Int, title: String, content: String): F[KewlBlog] = postgres.use { xa =>
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)".update
-          .withUniqueGeneratedKeys[(Int, String, String)]("post_id", "post_title", "post_content").transact(xa)
+          .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
       override def update(id: Int, title: String, content: String): F[Int] = postgres.use { xa =>
