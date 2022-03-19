@@ -26,10 +26,26 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
 
     case req @ POST -> Root =>
       for {
-        author <- req.decodeJson[Author]
-        a <- repository.create(author)
-        res <- Created(a)
+        dto <- req.decodeJson[AuthorDto]
+        a = AuthorDto.toDomain(dto)
+        x <- repository.create(a)
+        res <- Created(x)
       } yield res
+
+    case req @ PUT -> Root / IntVar(id) =>
+      for {
+        dto <- req.decodeJson[AuthorDto]
+        author <- repository.findAuthorById(id)
+        update <- author.fold(NotFound())(a =>
+          val updated = a.copy(
+            name = Name(dto.name),
+            email = a.email.copy(EmailAddress(dto.email))
+          )
+          val response = repository.update(updated)
+          Created(response)
+        )
+      } yield update
+
 
     case DELETE -> Root / IntVar(id) =>
       for {

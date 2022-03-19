@@ -7,8 +7,9 @@ import io.circe.syntax.*
 import io.circe.generic.auto.*
 
 object Author:
+  implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
   implicit val authorCodec: Codec[Author] = deriveCodec[Author]
-  implicit val emailCodec: Codec[Email] = deriveCodec[Email]
+//  implicit val emailCodec: Codec[Email] = deriveCodec[Email]
 //  implicit val statusCodec: Codec[VerificationStatus] = deriveCodec[VerificationStatus]
   implicit val statusDecode: Encoder[VerificationStatus] = Encoder.instance {
     case verified @ Verified() => verified.asJson
@@ -16,9 +17,9 @@ object Author:
   }
   implicit val authorRead: Read[Author] =
     Read[(Int, String, String, String)].map { case (id, name, emailAdd, verified) =>
-      val status = EmailVerification.make(verified)
-      val hmm = EmailVerification.cake("")
-      val email = Email(EmailAddress(emailAdd), status)
+//      val status = EmailVerification.make(verified)
+//      val hmm = EmailVerification.cake("")
+      val email = Email(EmailAddress(emailAdd), EmailVerification.make(verified))
       Author(AuthorId(id), Name(name), email)
     }
   implicit val authorWrite: Write[Author] =
@@ -85,3 +86,17 @@ object Author:
   case class Email(address: EmailAddress, status: EmailVerification)
 
   case class Author(id: AuthorId, name: Name, email: Email)
+  
+  case class AuthorDto(name: String, email: String)
+  
+  object AuthorDto:
+    def toDomain(dto: AuthorDto): Author =
+      val id = scala.util.Random.nextInt(9999)
+      Author(
+        AuthorId(id),
+        Name(dto.name),
+        Email(
+          EmailAddress(dto.email),
+          EmailVerification("Unverified")
+        )
+      )
