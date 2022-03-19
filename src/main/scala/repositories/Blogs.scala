@@ -16,7 +16,7 @@ trait Blogs[F[_]]:
   def findKewlBlogById(id: Int): F[Option[KewlBlog]]
   def create(id: Int, title: String, content: String): F[KewlBlog]
   def insertKewB(kewlBlog: KewlBlog): F[KewlBlog]
-  def update(id: Int, title: String, content: String): F[Int]
+  def update(kewlBlog: KewlBlog): F[KewlBlog]
   def delete(id: Int): F[Either[String, Int]]
 
 
@@ -45,9 +45,12 @@ object Blogs:
             .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
-      override def update(id: Int, title: String, content: String): F[Int] = postgres.use { xa =>
+      override def update(kewlBlog: KewlBlog): F[KewlBlog] = postgres.use { xa =>
+        val id = kewlBlog.id.value
+        val title = kewlBlog.title.value
+        val content = kewlBlog.content.v
         sql"update junk set post_title = $title, post_content = $content where post_id = $id".update
-          .withUniqueGeneratedKeys[Int]("post_id").transact(xa)
+          .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
       override def delete(id: Int): F[Either[String, Int]] = postgres.use { xa =>
