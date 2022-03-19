@@ -29,8 +29,9 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
     case req @ POST -> Root =>
       for {
         kewl <- req.decodeJson[KewlBlog]
-        newId <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
-        res <- Created(newId)
+        tup <- repository.create(kewl.id.value, kewl.title.value, kewl.content.v)
+        kewB = KewlBlog(KewlId(tup._1), KewlTitle(tup._2), KewlContent(tup._3))
+        res <- Created(kewB)
       } yield res
 
     case req @ PUT -> Root / IntVar(id) =>
