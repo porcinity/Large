@@ -26,6 +26,8 @@ lazy val root = project
 
       "com.github.daddykotex" %% "courier" % "3.1.0",
 
-      "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1"
+      "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1",
+
+      "com.aventrix.jnanoid" % "jnanoid" % "2.0.0"
     )
 )
