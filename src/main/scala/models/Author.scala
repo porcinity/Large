@@ -6,25 +6,27 @@ import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import io.circe.syntax.*
 import io.circe.generic.auto.*
 
+import java.time.LocalDate
+import doobie.implicits.legacy.localdate._
+import com.aventrix.jnanoid.jnanoid.*
+
 object Author:
   implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
   implicit val authorCodec: Codec[Author] = deriveCodec[Author]
-//  implicit val emailCodec: Codec[Email] = deriveCodec[Email]
-//  implicit val statusCodec: Codec[VerificationStatus] = deriveCodec[VerificationStatus]
-//  implicit val statusDecode: Encoder[VerificationStatus] = Encoder.instance {
-//    case verified @ Verified() => verified.asJson
-//    case unverified @ Unverified(_) => unverified.asJson
-//  }
   implicit val authorRead: Read[Author] =
-    Read[(Int, String, String, String)].map { case (id, name, emailAdd, verified) =>
-//      val status = EmailVerification.make(verified)
-//      val hmm = EmailVerification.cake("")
-      val email = Email(EmailAddress(emailAdd), EmailStatus.makeFromString(verified))
-      Author(AuthorId(id), Name(name), email)
+    Read[(String, String, String, String, LocalDate)].map { case (id, name, emailAdd, verified, date) =>
+      val email = Email(EmailAddress(emailAdd), EmailStatus.fromString(verified))
+      Author(AuthorId(id), Name(name), email, date)
     }
   implicit val authorWrite: Write[Author] =
-    Write[(Int, String, String, String)].contramap { author =>
-      (author.id.value, author.name.value, author.email.address.value, EmailStatus.makeString(author.email.status))
+    Write[(String, String, String, String, LocalDate)].contramap { author =>
+      (
+        author.id.value,
+        author.name.value,
+        author.email.address.value, 
+        EmailStatus.makeString(author.email.status),
+        author.joinDate
+      )
     }
 
   opaque type Name = String
@@ -46,16 +48,16 @@ object Author:
   object Weight:
     def apply(value: Int): Weight = value
 
-  opaque type AuthorId = Int
+  opaque type AuthorId = String
 
   object AuthorId:
-    def apply(value: Int): AuthorId = value
-  extension (x: AuthorId) def value: Int = x
+    def apply(value: String): AuthorId = value
+  extension (x: AuthorId) def value: String = x
 
   opaque type EmailAddress = String
   object EmailAddress:
     def apply(value: String): EmailAddress = value
-  extension (x: EmailAddress) def value: String = x
+  extension (x: EmailAddress) def v: String = x
 
   import org.latestbit.circe.adt.codec._
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
@@ -63,7 +65,7 @@ object Author:
     case Unverified
 
   object EmailStatus:
-    def makeFromString(x: String): EmailStatus = x match {
+    def fromString(x: String): EmailStatus = x match {
       case "Verified" => EmailStatus.Verified
       case _ => EmailStatus.Unverified
     }
@@ -73,18 +75,24 @@ object Author:
 
   case class Email(address: EmailAddress, status: EmailStatus)
 
-  case class Author(id: AuthorId, name: Name, email: Email)
+  opaque type UserJoinDate = LocalDate
+//  object JoinDate:
+//    def apply(date: UserJoinDate): UserJoinDate = date
+  extension (x: UserJoinDate) def value: LocalDate = x
+
+  case class Author(id: AuthorId, name: Name, email: Email, joinDate: UserJoinDate)
 
   case class AuthorDto(name: String, email: String)
-
+  
   object AuthorDto:
     def toDomain(dto: AuthorDto): Author =
-      val id = scala.util.Random.nextInt(9999)
+      val id = NanoIdUtils.randomNanoId()
       Author(
         AuthorId(id),
         Name(dto.name),
         Email(
           EmailAddress(dto.email),
           EmailStatus.Unverified
-        )
+        ),
+        LocalDate.now()
       )
