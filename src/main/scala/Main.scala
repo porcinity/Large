@@ -41,7 +41,7 @@ object Main extends IOApp:
 
     for {
       server <- BlazeServerBuilder[IO](global)
-        .bindHttp(8080, "localhost")
+        .bindHttp(8080, "0.0.0.0")
         .withHttpApp(httpApp)
         .resource
         .use(_ => IO.never)
