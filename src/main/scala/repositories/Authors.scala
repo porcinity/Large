@@ -14,6 +14,7 @@ trait Authors[F[_]]:
   def create(author: Author): F[Author]
   def update(author: Author): F[Author]
   def delete(id: Int): F[Either[String, Int]]
+//  def verify(author: Author): F[Unit]
 
 object Authors:
   def make[F[_]: Concurrent](postgres: Resource[F, Transactor[F]]): Authors[F] =
@@ -32,7 +33,7 @@ object Authors:
         val id = author.id.value
         val name = author.name.value
         val email = author.email.address.value
-        val emailStatus = author.email.status.value
+        val emailStatus = EmailStatus.makeString(author.email.status)
         sql"insert into authors (author_id, author_name, author_email, author_email_status) values ($id, $name, $email, $emailStatus)"
           .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status").transact(xa)
       }
@@ -41,9 +42,16 @@ object Authors:
         val id = author.id.value
         val name = author.name.value
         val email = author.email.address.value
-        sql"update authors set author_name = $name, author_email = $email where author_id = $id"
+        val status = EmailStatus.makeString(author.email.status)
+        sql"update authors set author_name = $name, author_email = $email, author_email_status = $status where author_id = $id"
           .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status").transact(xa)
       }
+
+//      override def verify(author: Author): F[Unit] = postgres.use { xa =>
+//        val id = author.id.value
+//        val status = author.email.status.value
+//        sql"update authors set author_email_status = $status where author_id = $id".run
+//      }
 //
       override def delete(id: Int): F[Either[String, Int]] = postgres.use { xa =>
         sql"delete from authors where author_id = $id"

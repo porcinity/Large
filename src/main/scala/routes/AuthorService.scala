@@ -7,12 +7,12 @@ import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.Status.{Created, NoContent, Ok}
+import org.http4s.Status.{Created, NoContent, NotFound, Ok}
 import repositories.Authors
 import models.Author.*
-
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
+import mail.JavaMailUtil
 class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[F] {
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
@@ -29,7 +29,20 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
         dto <- req.decodeJson[AuthorDto]
         a = AuthorDto.toDomain(dto)
         x <- repository.create(a)
+//        ignore = JavaMailUtil.sendMail(a.email.address.value, a.id.value)
         res <- Created(x)
+      } yield res
+
+    case GET -> Root / IntVar(id) / "verify" =>
+      for {
+        author <- repository.findAuthorById(id)
+        res <- author.fold(NotFound())(a =>
+          val verified = a.copy(
+            email = a.email.copy(status = EmailStatus.Verified)
+          )
+          val updated = repository.update(verified)
+          Ok(updated)
+        )
       } yield res
 
     case req @ PUT -> Root / IntVar(id) =>
@@ -45,7 +58,6 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
           Created(updatedAuthor)
         )
       } yield res
-
 
     case DELETE -> Root / IntVar(id) =>
       for {
