@@ -49,7 +49,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
 
     case DELETE -> Root / IntVar(id) =>
       for {
-        res <- repository.delete(id)
+        res <- repository.deleteBlog(id)
         y <- res.fold(_ => NotFound(), _ => NoContent())
       } yield y
   }

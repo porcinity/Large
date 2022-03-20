@@ -7,6 +7,7 @@ import doobie.*
 import doobie.postgres.*
 import doobie.postgres.implicits.*
 import models.KewlBlog.*
+import cats.Apply
 
 // This is needed to use map on F in the repository methods
 import cats.syntax.functor.*
@@ -17,7 +18,7 @@ trait Blogs[F[_]]:
   def create(id: Int, title: String, content: String): F[KewlBlog]
   def insertKewB(kewlBlog: KewlBlog): F[KewlBlog]
   def update(kewlBlog: KewlBlog): F[KewlBlog]
-  def delete(id: Int): F[Either[String, Int]]
+  def deleteBlog(id: Int): F[Either[String, Int]]
 
 
 object Blogs:
@@ -53,7 +54,7 @@ object Blogs:
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
-      override def delete(id: Int): F[Either[String, Int]] = postgres.use { xa =>
+      override def deleteBlog(id: Int): F[Either[String, Int]] = postgres.use { xa =>
         sql"delete from junk where post_id = $id".update.run.transact(xa).map { x =>
           if (x == 0) Left("Blog not found.")
           else Right(x)
