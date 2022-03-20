@@ -11,20 +11,20 @@ object Author:
   implicit val authorCodec: Codec[Author] = deriveCodec[Author]
 //  implicit val emailCodec: Codec[Email] = deriveCodec[Email]
 //  implicit val statusCodec: Codec[VerificationStatus] = deriveCodec[VerificationStatus]
-  implicit val statusDecode: Encoder[VerificationStatus] = Encoder.instance {
-    case verified @ Verified() => verified.asJson
-    case unverified @ Unverified(_) => unverified.asJson
-  }
+//  implicit val statusDecode: Encoder[VerificationStatus] = Encoder.instance {
+//    case verified @ Verified() => verified.asJson
+//    case unverified @ Unverified(_) => unverified.asJson
+//  }
   implicit val authorRead: Read[Author] =
     Read[(Int, String, String, String)].map { case (id, name, emailAdd, verified) =>
 //      val status = EmailVerification.make(verified)
 //      val hmm = EmailVerification.cake("")
-      val email = Email(EmailAddress(emailAdd), EmailVerification.make(verified))
+      val email = Email(EmailAddress(emailAdd), EmailStatus.makeFromString(verified))
       Author(AuthorId(id), Name(name), email)
     }
   implicit val authorWrite: Write[Author] =
     Write[(Int, String, String, String)].contramap { author =>
-      (author.id.value, author.name.value, author.email.address.value, author.email.status.value)
+      (author.id.value, author.name.value, author.email.address.value, EmailStatus.makeString(author.email.status))
     }
 
   opaque type Name = String
@@ -57,38 +57,26 @@ object Author:
     def apply(value: String): EmailAddress = value
   extension (x: EmailAddress) def value: String = x
 
-  opaque type EmailVerification = String
-  object EmailVerification:
-    def apply(value: String): EmailVerification = value
-    def make(input: String): EmailVerification = input match {
-      case "Verified" => new EmailVerification("Verified")
-      case _ => new EmailVerification("Unverified")
+  import org.latestbit.circe.adt.codec._
+  enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
+    case Verified
+    case Unverified
+
+  object EmailStatus:
+    def makeFromString(x: String): EmailStatus = x match {
+      case "Verified" => EmailStatus.Verified
+      case _ => EmailStatus.Unverified
     }
-    val cake: String => EmailVerification = {
-      case "verified" => new EmailVerification("Verified")
-      case _ => new EmailVerification("Unverified")
-    }
-    extension (x: EmailVerification) def value: String = x
+    def makeString(vs: EmailStatus): String = vs match
+      case Verified => "Verified"
+      case Unverified => "Unverified"
 
-//  enum VerificationStatus:
-//    case Verified
-//    case Unverified
-
-  sealed trait VerificationStatus
-  case class Unverified(uv: String) extends VerificationStatus
-  case class Verified() extends VerificationStatus
-
-  object VerificationStatus:
-    def fromString(string: String): VerificationStatus = string match
-      case "Unverified" => Unverified("Unverified")
-      case "Verified" => Verified()
-
-  case class Email(address: EmailAddress, status: EmailVerification)
+  case class Email(address: EmailAddress, status: EmailStatus)
 
   case class Author(id: AuthorId, name: Name, email: Email)
-  
+
   case class AuthorDto(name: String, email: String)
-  
+
   object AuthorDto:
     def toDomain(dto: AuthorDto): Author =
       val id = scala.util.Random.nextInt(9999)
@@ -97,6 +85,6 @@ object Author:
         Name(dto.name),
         Email(
           EmailAddress(dto.email),
-          EmailVerification("Unverified")
+          EmailStatus.Unverified
         )
       )
