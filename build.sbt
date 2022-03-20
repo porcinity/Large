@@ -24,6 +24,8 @@ lazy val root = project
 
       "io.circe"       %% "circe-generic"       % CirceVersion,
 
-      "com.lorandszakacs" %% "sprout" % "0.0.5",
+      "com.github.daddykotex" %% "courier" % "3.1.0",
+
+      "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1"
     )
 )
