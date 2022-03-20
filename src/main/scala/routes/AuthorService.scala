@@ -12,13 +12,19 @@ import repositories.Authors
 import models.Author.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-import mail.JavaMailUtil
+import mail.{JavaMailUtil, test}
+
+
 class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[F] {
+
+  object AuthorIdVar:
+    def unapply(str: String): Option[String] = Some(str)
+
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root => Ok(repository.findAllAuthors)
 
-    case GET -> Root / IntVar(id) =>
+    case GET -> Root / AuthorIdVar(id) =>
       for {
         a <- repository.findAuthorById(id)
         res <- a.fold(NotFound())(Ok(_))
@@ -29,11 +35,10 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
         dto <- req.decodeJson[AuthorDto]
         a = AuthorDto.toDomain(dto)
         x <- repository.create(a)
-//        ignore = JavaMailUtil.sendMail(a.email.address.value, a.id.value)
         res <- Created(x)
       } yield res
 
-    case GET -> Root / IntVar(id) / "verify" =>
+    case GET -> Root / AuthorIdVar(id) / "verify" =>
       for {
         author <- repository.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
@@ -45,7 +50,7 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
         )
       } yield res
 
-    case req @ PUT -> Root / IntVar(id) =>
+    case req @ PUT -> Root / AuthorIdVar(id) =>
       for {
         dto <- req.decodeJson[AuthorDto]
         author <- repository.findAuthorById(id)
@@ -59,7 +64,7 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
         )
       } yield res
 
-    case DELETE -> Root / IntVar(id) =>
+    case DELETE -> Root / AuthorIdVar(id) =>
       for {
         res <- repository.delete(id)
         y <- res.fold(_ => NotFound(), _ => NoContent())
