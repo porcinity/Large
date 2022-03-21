@@ -25,11 +25,11 @@ object Blogs:
   def make[F[_]: Concurrent](postgres: Resource[F, Transactor[F]]): Blogs[F] =
     new Blogs[F] {
       override def findAllBlogs: F[List[Blog]] =  postgres.use { xa =>
-        sql"select post_id, post_title, post_content from junk".query[Blog].to[List].transact(xa)
+        sql"select post_id, post_title, post_content, post_author from junk".query[Blog].to[List].transact(xa)
       }
 
       override def findBlogById(id: String): F[Option[Blog]] = postgres.use { xa =>
-        sql"select post_id, post_title, post_content from junk where post_id = $id ".query[Blog].option.transact(xa)
+        sql"select post_id, post_title, post_content, post_author from junk where post_id = $id ".query[Blog].option.transact(xa)
       }
 
       override def create(id: String, title: String, content: String): F[Blog] = postgres.use { xa =>
@@ -41,9 +41,10 @@ object Blogs:
         val id = blog.id.value
         val title = blog.title.titleVal
         val content = blog.content.v
-        sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)"
+        val author = blog.author.authorVal
+        sql"insert into junk (post_id, post_title, post_content, post_author) values ($id, $title, $content, $author)"
             .update
-            .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
+            .withUniqueGeneratedKeys("post_id", "post_title", "post_content", "post_author").transact(xa)
       }
 
       override def update(blog: Blog): F[Blog] = postgres.use { xa =>
