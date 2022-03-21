@@ -4,16 +4,20 @@ import doobie.{Read, Write}
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 
+import java.time.LocalDate
+import doobie.implicits.legacy.localdate.*
+import com.aventrix.jnanoid.jnanoid.*
+
 object Blog:
   case class Blog(id: BlogId, title: BlogTitle, content: BlogContent)
 
-  opaque type BlogId = Int
+  opaque type BlogId = String
 
   object BlogId:
-    def apply(value: Int): BlogId = value
+    def apply(value: String): BlogId = value
 
   extension (x: BlogId)
-    def value: Int = x
+    def value: String = x
 
   opaque type BlogTitle = String
 
@@ -21,7 +25,7 @@ object Blog:
     def apply(value: String): BlogTitle = value
 
   extension (x: BlogTitle)
-    def value: String = x
+    def titleVal: String = x
 
   opaque type BlogContent = String
 
@@ -32,18 +36,18 @@ object Blog:
 
   implicit val kewlCodec: Codec[Blog] = deriveCodec[Blog]
   implicit val kewlBlogRead: Read[Blog] =
-    Read[(Int, String, String)].map { case (id, title, content) =>
+    Read[(String, String, String)].map { case (id, title, content) =>
       Blog(BlogId(id), BlogTitle(title), BlogContent(content))
     }
   implicit val kewlBlogWrite: Write[Blog] =
-    Write[(Int, String, String)].contramap { blog =>
+    Write[(String, String, String)].contramap { blog =>
       (blog.id.value, blog.title.value, blog.content.v)
     }
-    
+
   case class KewlBlogDto(title: String, content: String)
-  
+
   object KewlBlogDto:
     implicit val dtoCodec: Codec[KewlBlogDto] = deriveCodec[KewlBlogDto]
     def toDomain(dto: KewlBlogDto): Blog =
-      val r = scala.util.Random.nextInt(99999)
-      Blog(BlogId(r),BlogTitle(dto.title), BlogContent(dto.content))
+      val id = NanoIdUtils.randomNanoId()
+      Blog(BlogId(id),BlogTitle(dto.title), BlogContent(dto.content))

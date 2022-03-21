@@ -39,7 +39,7 @@ object Blogs:
 
       override def insertBlog(blog: Blog): F[Blog] = postgres.use { xa =>
         val id = blog.id.value
-        val title = blog.title.value
+        val title = blog.title.titleVal
         val content = blog.content.v
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)"
             .update
@@ -48,7 +48,7 @@ object Blogs:
 
       override def update(blog: Blog): F[Blog] = postgres.use { xa =>
         val id = blog.id.value
-        val title = blog.title.value
+        val title = blog.title.titleVal
         val content = blog.content.v
         sql"update junk set post_title = $title, post_content = $content where post_id = $id".update
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
