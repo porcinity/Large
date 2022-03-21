@@ -1,13 +1,14 @@
 package routes
 
-import cats.effect.Concurrent
+import cats.effect.kernel.Outcome.{Errored, Succeeded}
+import cats.effect.{Async, Concurrent, Deferred, Sync, Temporal}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.Status.{Created, NoContent, NotFound, Ok}
+import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok}
 import repositories.Authors
 import models.Author.*
 import cats.syntax.flatMap.*
@@ -22,7 +23,14 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
-    case GET -> Root => Ok(repository.findAllAuthors)
+    case GET -> Root =>
+      for {
+       authors <- Concurrent[F].start(repository.findAllAuthors)
+       fib <- authors.join
+       res <- fib match {
+         case Succeeded(xs) => Ok(xs)
+       }
+      } yield res
 
     case GET -> Root / AuthorIdVar(id) =>
       for {
@@ -34,8 +42,15 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
       for {
         dto <- req.decodeJson[AuthorDto]
         a = AuthorDto.toDomain(dto)
-        x <- repository.create(a)
-        res <- Created(x)
+        x <- Concurrent[F].start(repository.create(a))
+        y <- x.join
+        res <- y match {
+          case Succeeded(x) => {
+            Concurrent[F].start(JavaMailUtil.main(Array("")))
+            Created(x)
+          }
+          case Errored(e) => BadRequest()
+        }
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>
