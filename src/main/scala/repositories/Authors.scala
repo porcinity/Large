@@ -6,6 +6,7 @@ import doobie.implicits.*
 import doobie.postgres.*
 import doobie.postgres.implicits.*
 import models.Author.*
+import models.Author.Codecs.{authorRead, authorWrite}
 import cats.syntax.functor.*
 
 trait Authors[F[_]]:
@@ -45,7 +46,7 @@ object Authors:
         val email = author.email.address.value
         val status = EmailStatus.makeString(author.email.status)
         sql"update authors set author_name = $name, author_email = $email, author_email_status = $status where author_id = $id"
-          .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status").transact(xa)
+          .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status", "author_join_date").transact(xa)
       }
 
 //      override def verify(author: Author): F[Unit] = postgres.use { xa =>
