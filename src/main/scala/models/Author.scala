@@ -13,23 +13,25 @@ import com.aventrix.jnanoid.jnanoid.*
 import scala.annotation.targetName
 
 object Author:
-  implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
-  implicit val authorCodec: Codec[Author] = deriveCodec[Author]
-  implicit val authorRead: Read[Author] =
-    Read[(String, String, String, String, LocalDate)].map { case (id, name, emailAdd, verified, date) =>
-      val email = Email(EmailAddress(emailAdd), EmailStatus.fromString(verified))
-      Author(AuthorId(id), Name(name), email, date)
-    }
-  implicit val authorWrite: Write[Author] =
-    Write[(String, String, String, String, LocalDate)].contramap { author =>
-      (
-        author.id,
-        author.name,
-        author.email.address, 
-        EmailStatus.makeString(author.email.status),
-        author.joinDate
-      )
-    }
+
+  object Codecs:
+    implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
+    implicit val authorCodec: Codec[Author] = deriveCodec[Author]
+    implicit val authorRead: Read[Author] =
+      Read[(String, String, String, String, LocalDate)].map { case (id, name, emailAdd, verified, date) =>
+        val email = Email(EmailAddress(emailAdd), EmailStatus.fromString(verified))
+        Author(AuthorId(id), Name(name), email, date)
+      }
+    implicit val authorWrite: Write[Author] =
+      Write[(String, String, String, String, LocalDate)].contramap { author =>
+        (
+          author.id,
+          author.name,
+          author.email.address,
+          EmailStatus.makeString(author.email.status),
+          author.joinDate
+        )
+      }
 
   opaque type Name = String
 
