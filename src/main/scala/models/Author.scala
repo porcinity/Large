@@ -7,8 +7,10 @@ import io.circe.syntax.*
 import io.circe.generic.auto.*
 
 import java.time.LocalDate
-import doobie.implicits.legacy.localdate._
+import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
+
+import scala.annotation.targetName
 
 object Author:
   implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
@@ -21,9 +23,9 @@ object Author:
   implicit val authorWrite: Write[Author] =
     Write[(String, String, String, String, LocalDate)].contramap { author =>
       (
-        author.id.value,
-        author.name.value,
-        author.email.address.value, 
+        author.id,
+        author.name,
+        author.email.address, 
         EmailStatus.makeString(author.email.status),
         author.joinDate
       )
@@ -52,12 +54,19 @@ object Author:
 
   object AuthorId:
     def apply(value: String): AuthorId = value
-  extension (x: AuthorId) def value: String = x
+    def value(authorId: AuthorId): String = authorId
+  extension (x: AuthorId) {
+    @targetName("value_AuthorId")
+    def value: String = x
+  }
 
   opaque type EmailAddress = String
   object EmailAddress:
     def apply(value: String): EmailAddress = value
-  extension (x: EmailAddress) def v: String = x
+  extension (x: EmailAddress) {
+    @targetName("value_EmailAddress")
+    def value: String = x
+  }
 
   import org.latestbit.circe.adt.codec._
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
@@ -75,12 +84,12 @@ object Author:
 
   case class Email(address: EmailAddress, status: EmailStatus)
 
-  opaque type UserJoinDate = LocalDate
-//  object JoinDate:
-//    def apply(date: UserJoinDate): UserJoinDate = date
-  extension (x: UserJoinDate) def value: LocalDate = x
+  opaque type JoinDate = LocalDate
+  object JoinDate:
+    def apply(date: JoinDate): JoinDate = date
+  extension (x: JoinDate) def value: LocalDate = x
 
-  case class Author(id: AuthorId, name: Name, email: Email, joinDate: UserJoinDate)
+  case class Author(id: AuthorId, name: Name, email: Email, joinDate: JoinDate)
 
   case class AuthorDto(name: String, email: String)
   
@@ -94,5 +103,5 @@ object Author:
           EmailAddress(dto.email),
           EmailStatus.Unverified
         ),
-        LocalDate.now()
+        JoinDate(LocalDate.now())
       )
