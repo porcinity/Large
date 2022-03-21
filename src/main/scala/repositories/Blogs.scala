@@ -13,22 +13,22 @@ import cats.Apply
 import cats.syntax.functor.*
 
 trait Blogs[F[_]]:
-  def findAllKewlBlogs: F[List[Blog]]
-  def findKewlBlogById(id: Int): F[Option[Blog]]
+  def findAllBlogs: F[List[Blog]]
+  def findBlogById(id: Int): F[Option[Blog]]
   def create(id: Int, title: String, content: String): F[Blog]
-  def insertKewB(kewlBlog: Blog): F[Blog]
-  def update(kewlBlog: Blog): F[Blog]
+  def insertBlog(blog: Blog): F[Blog]
+  def update(blog: Blog): F[Blog]
   def deleteBlog(id: Int): F[Either[String, Int]]
 
 
 object Blogs:
   def make[F[_]: Concurrent](postgres: Resource[F, Transactor[F]]): Blogs[F] =
     new Blogs[F] {
-      override def findAllKewlBlogs: F[List[Blog]] =  postgres.use { xa =>
+      override def findAllBlogs: F[List[Blog]] =  postgres.use { xa =>
         sql"select post_id, post_title, post_content from junk".query[Blog].to[List].transact(xa)
       }
 
-      override def findKewlBlogById(id: Int): F[Option[Blog]] = postgres.use { xa =>
+      override def findBlogById(id: Int): F[Option[Blog]] = postgres.use { xa =>
         sql"select post_id, post_title, post_content from junk where post_id = $id ".query[Blog].option.transact(xa)
       }
 
@@ -37,19 +37,19 @@ object Blogs:
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
-      override def insertKewB(kewlBlog: Blog): F[Blog] = postgres.use { xa =>
-        val id = kewlBlog.id.value
-        val title = kewlBlog.title.value
-        val content = kewlBlog.content.v
+      override def insertBlog(blog: Blog): F[Blog] = postgres.use { xa =>
+        val id = blog.id.value
+        val title = blog.title.value
+        val content = blog.content.v
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)"
             .update
             .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
-      override def update(kewlBlog: Blog): F[Blog] = postgres.use { xa =>
-        val id = kewlBlog.id.value
-        val title = kewlBlog.title.value
-        val content = kewlBlog.content.v
+      override def update(blog: Blog): F[Blog] = postgres.use { xa =>
+        val id = blog.id.value
+        val title = blog.title.value
+        val content = blog.content.v
         sql"update junk set post_title = $title, post_content = $content where post_id = $id".update
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
