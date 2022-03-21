@@ -1,7 +1,7 @@
 lazy val scala3Version = "3.1.1"
 lazy val DoobieVersion = "1.0.0-RC1"
 lazy val CirceVersion = "0.14.1"
-lazy val Http4sVersion = "0.23.10"
+lazy val Http4sVersion = "0.23.11"
 lazy val JUnitVersion = "0.13.3"
 
 lazy val root = project
