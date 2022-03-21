@@ -10,6 +10,7 @@ import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok}
 import repositories.Authors
+import models.Author.Codecs.*
 import models.Author.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
