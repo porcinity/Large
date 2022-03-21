@@ -32,7 +32,7 @@ object Authors:
       override def create(author: Author): F[Author] = postgres.use { xa =>
         val id = author.id.value
         val name = author.name.value
-        val email = author.email.address.v
+        val email = author.email.address.value
         val emailStatus = EmailStatus.makeString(author.email.status)
         val joinDate = author.joinDate.value
         sql"insert into authors (author_id, author_name, author_email, author_email_status, author_join_date) values ($id, $name, $email, $emailStatus, $joinDate)"
@@ -42,7 +42,7 @@ object Authors:
       override def update(author: Author): F[Author] = postgres.use { xa =>
         val id = author.id.value
         val name = author.name.value
-        val email = author.email.address.v
+        val email = author.email.address.value
         val status = EmailStatus.makeString(author.email.status)
         sql"update authors set author_name = $name, author_email = $email, author_email_status = $status where author_id = $id"
           .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status").transact(xa)
