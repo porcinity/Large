@@ -1,7 +1,7 @@
 package routes
 
 import cats.effect.Concurrent
-import models.KewlBlog.*
+import models.Blog.*
 import org.http4s.HttpRoutes
 import org.http4s.Status.{Created, NoContent, Ok}
 import org.http4s.circe.*
@@ -39,8 +39,8 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
         foundBlog <- repository.findKewlBlogById(id)
         res <- foundBlog.fold(NotFound())(b =>
           val newInfo = b.copy(
-            title = KewlTitle(dto.title),
-            content = KewlContent(dto.content)
+            title = BlogTitle(dto.title),
+            content = BlogContent(dto.content)
           )
           val updatedBlog = repository.update(newInfo)
           Created(updatedBlog)

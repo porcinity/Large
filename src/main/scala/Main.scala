@@ -1,7 +1,7 @@
 import cats.effect.{ExitCode, IO, IOApp, Resource, Sync}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import models.KewlBlog.*
+import models.Blog.*
 import org.http4s.HttpRoutes
 import org.http4s.Status.Ok
 import org.http4s.blaze.server.BlazeServerBuilder
