@@ -8,7 +8,7 @@ import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok}
+import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import repositories.Authors
 import models.Author.Codecs.*
 import models.Author.*
@@ -43,15 +43,20 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
       for {
         dto <- req.decodeJson[AuthorDto]
         a = AuthorDto.toDomain(dto)
-        x <- Concurrent[F].start(repository.create(a))
-        y <- x.join
-        res <- y match {
-          case Succeeded(x) => {
-            Concurrent[F].start(JavaMailUtil.main(Array("")))
-            Created(x)
-          }
-          case Errored(e) => BadRequest()
-        }
+        res <- a.fold(e => UnprocessableEntity(e), x => {
+          repository.create(x)
+          Ok(x)
+        })
+//        res <- Ok(repository.create(a))
+//        x <- Concurrent[F].start(repository.create(a))
+//        y <- x.join
+//        res <- y match {
+//          case Succeeded(x) => {
+//            Concurrent[F].start(JavaMailUtil.main(Array("")))
+//            Created(x)
+//          }
+//          case Errored(e) => BadRequest()
+//        }
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>

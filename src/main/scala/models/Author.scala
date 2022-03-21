@@ -37,6 +37,11 @@ object Author:
 
   object Name:
     def apply(value: String): Name = value
+    def create(value: String): Either[String, Name] = value match {
+      case "" => Left("Empty")
+      case x if x.length > 4 => Left("too long tho")
+      case _ => Right(value)
+    }
     extension (x: Name)
       def value: String = x
 
@@ -96,11 +101,14 @@ object Author:
   case class AuthorDto(name: String, email: String)
   
   object AuthorDto:
-    def toDomain(dto: AuthorDto): Author =
+    def toDomain(dto: AuthorDto): Either[String, Author] =
       val id = NanoIdUtils.randomNanoId()
-      Author(
+      val name = Name.create(dto.name)
+      for {
+        n <- name
+      } yield Author(
         AuthorId(id),
-        Name(dto.name),
+        n,
         Email(
           EmailAddress(dto.email),
           EmailStatus.Unverified
