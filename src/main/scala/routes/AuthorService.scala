@@ -43,20 +43,7 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
       for {
         dto <- req.decodeJson[AuthorDto]
         a = AuthorDto.toDomain(dto)
-        res <- a.fold(e => UnprocessableEntity(e), x => {
-          repository.create(x)
-          Ok(x)
-        })
-//        res <- Ok(repository.create(a))
-//        x <- Concurrent[F].start(repository.create(a))
-//        y <- x.join
-//        res <- y match {
-//          case Succeeded(x) => {
-//            Concurrent[F].start(JavaMailUtil.main(Array("")))
-//            Created(x)
-//          }
-//          case Errored(e) => BadRequest()
-//        }
+        res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>
