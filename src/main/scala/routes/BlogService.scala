@@ -32,14 +32,14 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
 
     case req @ POST -> Root =>
       for {
-        dto <- req.decodeJson[KewlBlogDto]
-        blog = KewlBlogDto.toDomain(dto)
+        dto <- req.decodeJson[BlogDto]
+        blog = BlogDto.toDomain(dto)
         res <- Created(repository.insertBlog(blog))
       } yield res
 
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
-        dto <- req.decodeJson[KewlBlogDto]
+        dto <- req.decodeJson[BlogDto]
         foundBlog <- repository.findBlogById(id)
         res <- foundBlog.fold(NotFound())(b =>
           val newInfo = b.copy(

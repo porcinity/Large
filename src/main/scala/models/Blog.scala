@@ -41,20 +41,20 @@ object Blog:
     extension (x: BlogAuthor) def authorVal: String = x
 
 
-  implicit val kewlCodec: Codec[Blog] = deriveCodec[Blog]
-  implicit val kewlBlogRead: Read[Blog] =
+  implicit val blogCodec: Codec[Blog] = deriveCodec[Blog]
+  implicit val blogRead: Read[Blog] =
     Read[(String, String, String, String)].map { case (id, title, content, authorId) =>
       Blog(BlogId(id), BlogTitle(title), BlogContent(content), BlogAuthor(authorId))
     }
-  implicit val kewlBlogWrite: Write[Blog] =
+  implicit val blogWrite: Write[Blog] =
     Write[(String, String, String, String)].contramap { blog =>
       (blog.id.value, blog.title.value, blog.content.v, blog.author.value)
     }
 
-  case class KewlBlogDto(title: String, content: String, authorId: String)
+  case class BlogDto(title: String, content: String, authorId: String)
 
-  object KewlBlogDto:
-    implicit val dtoCodec: Codec[KewlBlogDto] = deriveCodec[KewlBlogDto]
-    def toDomain(dto: KewlBlogDto): Blog =
+  object BlogDto:
+    implicit val dtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
+    def toDomain(dto: BlogDto): Blog =
       val id = NanoIdUtils.randomNanoId()
       Blog(BlogId(id),BlogTitle(dto.title), BlogContent(dto.content), BlogAuthor(dto.authorId))
