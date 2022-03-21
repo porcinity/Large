@@ -17,10 +17,14 @@ import cats.syntax.functor.*
 
 // The type constraint of Concurrent is necessary to decode Json
 class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
+
+  object BlogIdVar:
+    def unapply(str: String): Option[String] = Some(str)
+
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root => Ok(repository.findAllBlogs)
 
-    case GET -> Root / IntVar(id) =>
+    case GET -> Root / BlogIdVar(id) =>
       for {
         blog <- repository.findBlogById(id)
         res <- blog.fold(NotFound())(Ok(_))
@@ -33,7 +37,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
         res <- Created(repository.insertBlog(blog))
       } yield res
 
-    case req @ PUT -> Root / IntVar(id) =>
+    case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.decodeJson[KewlBlogDto]
         foundBlog <- repository.findBlogById(id)
@@ -47,7 +51,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
         )
       } yield res
 
-    case DELETE -> Root / IntVar(id) =>
+    case DELETE -> Root / BlogIdVar(id) =>
       for {
         res <- repository.deleteBlog(id)
         y <- res.fold(_ => NotFound(), _ => NoContent())

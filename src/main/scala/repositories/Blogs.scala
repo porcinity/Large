@@ -14,11 +14,11 @@ import cats.syntax.functor.*
 
 trait Blogs[F[_]]:
   def findAllBlogs: F[List[Blog]]
-  def findBlogById(id: Int): F[Option[Blog]]
-  def create(id: Int, title: String, content: String): F[Blog]
+  def findBlogById(id: String): F[Option[Blog]]
+  def create(id: String, title: String, content: String): F[Blog]
   def insertBlog(blog: Blog): F[Blog]
   def update(blog: Blog): F[Blog]
-  def deleteBlog(id: Int): F[Either[String, Int]]
+  def deleteBlog(id: String): F[Either[String, Int]]
 
 
 object Blogs:
@@ -28,11 +28,11 @@ object Blogs:
         sql"select post_id, post_title, post_content from junk".query[Blog].to[List].transact(xa)
       }
 
-      override def findBlogById(id: Int): F[Option[Blog]] = postgres.use { xa =>
+      override def findBlogById(id: String): F[Option[Blog]] = postgres.use { xa =>
         sql"select post_id, post_title, post_content from junk where post_id = $id ".query[Blog].option.transact(xa)
       }
 
-      override def create(id: Int, title: String, content: String): F[Blog] = postgres.use { xa =>
+      override def create(id: String, title: String, content: String): F[Blog] = postgres.use { xa =>
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)".update
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
@@ -54,7 +54,7 @@ object Blogs:
           .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
       }
 
-      override def deleteBlog(id: Int): F[Either[String, Int]] = postgres.use { xa =>
+      override def deleteBlog(id: String): F[Either[String, Int]] = postgres.use { xa =>
         sql"delete from junk where post_id = $id".update.run.transact(xa).map { x =>
           if (x == 0) Left("Blog not found.")
           else Right(x)
