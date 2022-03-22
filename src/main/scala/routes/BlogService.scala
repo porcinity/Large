@@ -1,9 +1,10 @@
 package routes
 
+import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import models.Blog.*
 import org.http4s.HttpRoutes
-import org.http4s.Status.{Created, NoContent, Ok}
+import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
@@ -34,21 +35,20 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
       for {
         dto <- req.decodeJson[BlogDto]
         blog = BlogDto.toDomain(dto)
-        res <- Created(repository.insertBlog(blog))
+        res <- blog.fold(UnprocessableEntity(_), b => Created(repository.insertBlog(b)))
       } yield res
 
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.decodeJson[BlogDto]
         foundBlog <- repository.findBlogById(id)
-        res <- foundBlog.fold(NotFound())(b =>
-          val newInfo = b.copy(
-            title = BlogTitle(dto.title),
-            content = BlogContent(dto.content)
-          )
-          val updatedBlog = repository.update(newInfo)
-          Created(updatedBlog)
-        )
+        updatedBlog = BlogDto.toDomain(dto)
+        res <- (foundBlog, updatedBlog) match
+          case (None, _) => NotFound()
+          case (_, Invalid(e)) => UnprocessableEntity(e)
+          case (Some(b), Valid(u)) =>
+            val newBlog = b.copy(title = u.title, content = u.content)
+            Created(repository.update(newBlog))
       } yield res
 
     case DELETE -> Root / BlogIdVar(id) =>

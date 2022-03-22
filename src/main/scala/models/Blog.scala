@@ -7,15 +7,23 @@ import io.circe.generic.semiauto.deriveCodec
 import java.time.LocalDate
 import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
-import models.Author.AuthorId
+
+import cats.data.*
+import cats.data.Validated.*
+import cats.implicits.*
+import models.ValidationExtractors.*
 
 object Blog:
+  type ValidationError = String
+  type ValidationResult[A] = ValidatedNec[ValidationError, A]
+
   case class Blog(id: BlogId, title: BlogTitle, content: BlogContent, author: BlogAuthor)
 
   opaque type BlogId = String
 
   object BlogId:
     def apply(value: String): BlogId = value
+    def create(value: String): ValidationResult[BlogId] = value.validNec
 
   extension (x: BlogId)
     def value: String = x
@@ -24,20 +32,31 @@ object Blog:
 
   object BlogTitle:
     def apply(value: String): BlogTitle = value
+    def create(value: String): ValidationResult[BlogTitle] = value match
+      case EmptyName() => "Blog title cannot be empty.".invalidNec
+      case FewerThan5() => "Blog title must be longer than 5 characters.".invalidNec
+      case Over150() => "Blog title cannot be longer than 150 characters.".invalidNec
+      case _ => value.validNec
 
   extension (x: BlogTitle)
     def titleVal: String = x
 
   opaque type BlogContent = String
 
-  def BlogContent(value: String): BlogContent = value
-
+  object BlogContent:
+    def apply(value: String): BlogContent = value
+    def create(value: String): ValidationResult[BlogContent] = value match
+      case EmptyName() => "Blog cannot be empty.".invalidNec
+      case FewerThan5() => "Blog must be longer than 5 characters.".invalidNec
+      case Over15k() => "Blog must be less than 15,000 characters.".invalidNec
+      case _ => value.validNec
   extension (x: BlogContent) def v: String = x
 
   opaque type BlogAuthor = String
 
   object BlogAuthor:
     def apply(value: String): BlogAuthor = value
+    def create(value: String): ValidationResult[BlogAuthor] = value.validNec
     extension (x: BlogAuthor) def authorVal: String = x
 
 
@@ -54,7 +73,10 @@ object Blog:
   case class BlogDto(title: String, content: String, authorId: String)
 
   object BlogDto:
-    implicit val dtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
-    def toDomain(dto: BlogDto): Blog =
+    implicit val blogDtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
+    def toDomain(dto: BlogDto): ValidationResult[Blog] =
       val id = NanoIdUtils.randomNanoId()
-      Blog(BlogId(id),BlogTitle(dto.title), BlogContent(dto.content), BlogAuthor(dto.authorId))
+      (BlogId.create(id),
+        BlogTitle.create(dto.title),
+        BlogContent.create(dto.content),
+        BlogAuthor.create(dto.authorId)).mapN(Blog.apply)
