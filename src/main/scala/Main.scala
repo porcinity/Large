@@ -3,17 +3,16 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import models.Blog.*
 import org.http4s.HttpRoutes
-import org.http4s.Status.Ok
-import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.dsl.io.{GET, Root}
+import org.http4s.ember.server.*
+import org.http4s.implicits.*
+import org.http4s.syntax.all.*
 import org.http4s.server.Router
 import repositories.{Authors, Blogs}
 import routes.{AuthorService, BlogService}
+import com.comcast.ip4s.{ ipv4, port }
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
-
-    import scala.concurrent.ExecutionContext.global
 
     val postgres: Resource[IO, HikariTransactor[IO]] = for {
       ce <- ExecutionContexts.fixedThreadPool[IO](32)
@@ -39,11 +38,13 @@ object Main extends IOApp:
       "/authors" -> authorService.routes
     ).orNotFound
 
-    for {
-      server <- BlazeServerBuilder[IO](global)
-        .bindHttp(8080, "0.0.0.0")
+    for
+      server <- EmberServerBuilder
+        .default[IO]
+        .withHost(ipv4"0.0.0.0")
+        .withPort(port"8080")
         .withHttpApp(httpApp)
-        .resource
+        .build
         .use(_ => IO.never)
         .as(ExitCode.Success)
-    } yield server
+    yield server

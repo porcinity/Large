@@ -18,16 +18,20 @@ lazy val root = project
       "org.tpolecat"   %% "doobie-postgres"     % DoobieVersion,
       "org.tpolecat"   %% "doobie-hikari"       % DoobieVersion,
 
-      "org.http4s"     %% "http4s-blaze-server" % Http4sVersion,
+      "org.http4s"     %% "http4s-ember-server"       % Http4sVersion,
       "org.http4s"     %% "http4s-circe"        % Http4sVersion,
       "org.http4s"     %% "http4s-dsl"          % Http4sVersion,
 
+      "io.circe" %% "circe-core" % CirceVersion,
       "io.circe"       %% "circe-generic"       % CirceVersion,
 
       "com.github.daddykotex" %% "courier" % "3.1.0",
 
       "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1",
 
-      "com.aventrix.jnanoid" % "jnanoid" % "2.0.0"
+      "com.aventrix.jnanoid" % "jnanoid" % "2.0.0",
+
+      "dev.optics" %% "monocle-core"  % "3.1.0",
+      "dev.optics" %% "monocle-macro" % "3.1.0"
     )
 )
