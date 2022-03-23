@@ -14,7 +14,6 @@ import models.ValidationExtractors.*
 import scala.annotation.targetName
 
 import cats.data.*
-import cats.data.Validated.*
 import cats.implicits.*
 
 object Author:
@@ -114,7 +113,7 @@ object Author:
   object JoinDate:
     def apply(date: LocalDate): JoinDate = date
     def create (date: LocalDate): ValidationResult[JoinDate] = date match
-      case _ => validNec(date)
+      case _ => date.validNec
   extension (x: JoinDate) def value: LocalDate = x
 
   case class Author(id: AuthorId, name: Name, email: Email, joinDate: JoinDate)
@@ -129,18 +128,9 @@ object Author:
       val emailAddress = EmailAddress.create(dto.email)
       val email = (emailAddress, EmailStatus.init).mapN(Email.apply)
 
-      (AuthorId.create(id),
+      (
+        AuthorId.create(id),
         Name.create(dto.name),
         email,
-        JoinDate.create(LocalDate.now())).mapN(Author)
-//      val monadicc = for {
-//        n <- name
-//      } yield Author(
-//        AuthorId(id),
-//        n,
-//        Email(
-//          EmailAddress(dto.email),
-//          EmailStatus.Unverified
-//        ),
-//        JoinDate(LocalDate.now())
-//      )
+        JoinDate.create(LocalDate.now())
+        ).mapN(Author.apply)
