@@ -36,8 +36,14 @@ object Authors:
         val email = author.email.address.value
         val emailStatus = EmailStatus.makeString(author.email.status)
         val joinDate = author.joinDate.value
-        sql"insert into authors (author_id, author_name, author_email, author_email_status, author_join_date) values ($id, $name, $email, $emailStatus, $joinDate)"
-          .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status", "author_join_date").transact(xa)
+        sql"""
+          insert into authors
+          (author_id, author_name, author_email, author_email_status, author_join_date)
+          values ($id, $name, $email, $emailStatus, $joinDate)
+        """
+          .update
+          .withUniqueGeneratedKeys("*")
+          .transact(xa)
       }
 
       override def update(author: Author): F[Author] = postgres.use { xa =>
@@ -45,8 +51,16 @@ object Authors:
         val name = author.name.value
         val email = author.email.address.value
         val status = EmailStatus.makeString(author.email.status)
-        sql"update authors set author_name = $name, author_email = $email, author_email_status = $status where author_id = $id"
-          .update.withUniqueGeneratedKeys("author_id", "author_name", "author_email", "author_email_status", "author_join_date").transact(xa)
+        sql"""
+            update authors
+            set author_name = $name,
+                author_email = $email,
+                author_email_status = $status
+            where author_id = $id
+        """
+          .update
+          .withUniqueGeneratedKeys("*")
+          .transact(xa)
       }
 
 //      override def verify(author: Author): F[Unit] = postgres.use { xa =>
