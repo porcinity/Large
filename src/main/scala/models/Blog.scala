@@ -9,7 +9,6 @@ import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
 
 import cats.data.*
-import cats.data.Validated.*
 import cats.implicits.*
 import models.ValidationExtractors.*
 
@@ -37,6 +36,10 @@ object Blog:
       case FewerThan5() => "Blog title must be longer than 5 characters.".invalidNec
       case Over150() => "Blog title cannot be longer than 150 characters.".invalidNec
       case _ => value.validNec
+    def createEither(v: String): Either[String, BlogTitle] = v match {
+      case EmptyName() => Left("No empty is bad")
+      case _ => Right(v)
+    }
 
   extension (x: BlogTitle)
     def titleVal: String = x
@@ -50,6 +53,10 @@ object Blog:
       case FewerThan5() => "Blog must be longer than 5 characters.".invalidNec
       case Over15k() => "Blog must be less than 15,000 characters.".invalidNec
       case _ => value.validNec
+    def createEither(v: String): Either[String, BlogContent] = v match {
+      case EmptyName() => Left("Content must b here")
+      case _ => Right(v)
+    }
   extension (x: BlogContent) def v: String = x
 
   opaque type BlogAuthor = String
@@ -70,7 +77,7 @@ object Blog:
       (blog.id.value, blog.title.value, blog.content.v, blog.author.value)
     }
 
-  case class BlogDto(title: String, content: String, authorId: String)
+  case class BlogDto(title: String, content: String, author: String)
 
   object BlogDto:
     implicit val blogDtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
@@ -79,4 +86,11 @@ object Blog:
       (BlogId.create(id),
         BlogTitle.create(dto.title),
         BlogContent.create(dto.content),
-        BlogAuthor.create(dto.authorId)).mapN(Blog.apply)
+        BlogAuthor.create(dto.author)).mapN(Blog.apply)
+
+    def main(args: Array[String]): ValidatedNel[String, (BlogTitle,BlogContent)] = {
+      (
+        BlogTitle.createEither("").toValidatedNel,
+        BlogContent.createEither("").toValidatedNel
+      ).mapN((_,_))
+    }
