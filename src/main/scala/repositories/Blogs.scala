@@ -34,7 +34,7 @@ object Blogs:
 
       override def create(id: String, title: String, content: String): F[Blog] = postgres.use { xa =>
         sql"insert into junk (post_id, post_title, post_content) values ($id, $title, $content)".update
-          .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
+          .withUniqueGeneratedKeys("*").transact(xa)
       }
 
       override def insertBlog(blog: Blog): F[Blog] = postgres.use { xa =>
@@ -44,7 +44,7 @@ object Blogs:
         val author = blog.author.authorVal
         sql"insert into junk (post_id, post_title, post_content, post_author) values ($id, $title, $content, $author)"
             .update
-            .withUniqueGeneratedKeys("post_id", "post_title", "post_content", "post_author").transact(xa)
+            .withUniqueGeneratedKeys("*").transact(xa)
       }
 
       override def update(blog: Blog): F[Blog] = postgres.use { xa =>
@@ -52,7 +52,7 @@ object Blogs:
         val title = blog.title.titleVal
         val content = blog.content.v
         sql"update junk set post_title = $title, post_content = $content where post_id = $id".update
-          .withUniqueGeneratedKeys("post_id", "post_title", "post_content").transact(xa)
+          .withUniqueGeneratedKeys("*").transact(xa)
       }
 
       override def deleteBlog(id: String): F[Either[String, Int]] = postgres.use { xa =>
