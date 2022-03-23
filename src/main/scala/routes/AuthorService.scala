@@ -30,6 +30,7 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[
        fib <- authors.join
        res <- fib match {
          case Succeeded(xs) => Ok(xs)
+         case _ => NotFound()
        }
       } yield res
 
