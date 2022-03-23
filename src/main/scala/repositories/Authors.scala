@@ -77,10 +77,3 @@ object Authors:
         }
       }
     }
-    
-    
-// Come back to this
-// map { x =>
-//          case Author(x) => Some(x)
-//          case _ => None
-//        }
