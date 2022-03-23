@@ -9,7 +9,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.Authors
+import repositories.{Authors, AuthorsSkunk}
 import models.Author.Codecs.*
 import models.Author.*
 import cats.syntax.flatMap.*
@@ -17,22 +17,23 @@ import cats.syntax.functor.*
 import mail.{JavaMailUtil, test}
 
 
-class AuthorService[F[_]: Concurrent](repository: Authors[F]) extends Http4sDsl[F] {
+class AuthorService[F[_]: Concurrent](repository: Authors[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
   object AuthorIdVar:
     def unapply(str: String): Option[String] = Some(str)
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
-    case GET -> Root =>
-      for {
-       authors <- Concurrent[F].start(repository.findAllAuthors)
-       fib <- authors.join
-       res <- fib match {
-         case Succeeded(xs) => Ok(xs)
-         case _ => NotFound()
-       }
-      } yield res
+
+    case GET -> Root => Ok(otherRepo.findAllAuthorsSkunk)
+//      for {
+//       authors <- Concurrent[F].start(repository.findAllAuthors)
+//       fib <- authors.join
+//       res <- fib match {
+//         case Succeeded(xs) => Ok(xs)
+//         case _ => NotFound()
+//       }
+//      } yield res
 
     case GET -> Root / AuthorIdVar(id) =>
       for {

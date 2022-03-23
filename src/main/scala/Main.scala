@@ -7,9 +7,13 @@ import org.http4s.ember.server.*
 import org.http4s.implicits.*
 import org.http4s.syntax.all.*
 import org.http4s.server.Router
-import repositories.{Authors, Blogs}
+import repositories.{Authors, AuthorsSkunk, Blogs}
 import routes.{AuthorService, BlogService}
-import com.comcast.ip4s.{ ipv4, port }
+import com.comcast.ip4s.{ipv4, port}
+import skunk.*
+import skunk.codec.text.*
+import skunk.implicits.*
+import natchez.Trace.Implicits.noop
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
@@ -25,13 +29,24 @@ object Main extends IOApp:
       )
     } yield xa
 
+    val session =
+      Session.single[IO](
+        host = "localhost",
+        port = 5432,
+        user = "anthony",
+        password = Some("itb"),
+        database = "blog"
+      )
+
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
 
     val authorRepo: Authors[IO] = Authors.make(postgres)
 
+    val skunkRepo: AuthorsSkunk[IO] = AuthorsSkunk.make(session)
+
     val blogService: BlogService[IO] = new BlogService(blogsRepo)
 
-    val authorService: AuthorService[IO] = new AuthorService(authorRepo)
+    val authorService: AuthorService[IO] = new AuthorService(authorRepo, skunkRepo)
 
     val httpApp = Router(
       "/blogs" -> blogService.routes,

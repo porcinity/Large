@@ -32,6 +32,8 @@ lazy val root = project
       "com.aventrix.jnanoid" % "jnanoid" % "2.0.0",
 
       "dev.optics" %% "monocle-core"  % "3.1.0",
-      "dev.optics" %% "monocle-macro" % "3.1.0"
+      "dev.optics" %% "monocle-macro" % "3.1.0",
+
+      "org.tpolecat" %% "skunk-core" % "0.3.1"
     )
 )
