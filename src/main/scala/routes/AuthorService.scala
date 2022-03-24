@@ -17,6 +17,7 @@ import cats.syntax.functor.*
 import cats.Monad
 import mail.{JavaMailUtil, test}
 
+import cats.syntax.*
 
 class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
@@ -47,7 +48,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
       for {
         dto <- req.asJsonDecode[AuthorDto]
         a = AuthorDto.toDomain(dto)
-        res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
+        res <- a.fold(UnprocessableEntity(_), x => Ok(otherRepo.create(x)))
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>
