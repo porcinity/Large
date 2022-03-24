@@ -29,13 +29,14 @@ object Main extends IOApp:
       )
     } yield xa
 
-    val session =
-      Session.single[IO](
+    val session: Resource[IO, Resource[IO, Session[IO]]] =
+      Session.pooled[IO](
         host = "localhost",
         port = 5432,
         user = "anthony",
         password = Some("itb"),
-        database = "blog"
+        database = "blog",
+        max = 10
       )
 
     val blogsRepo: Blogs[IO] = Blogs.make(postgres)
