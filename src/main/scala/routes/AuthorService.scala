@@ -9,23 +9,24 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.{Authors, AuthorsSkunk}
+import repositories.{Users, AuthorsSkunk}
 import models.Author.Codecs.*
 import models.Author.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
+import cats.Monad
 import mail.{JavaMailUtil, test}
 
 
-class AuthorService[F[_]: Concurrent](repository: Authors[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
+class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
   object AuthorIdVar:
-    def unapply(str: String): Option[String] = Some(str)
+    def unapply(str: String): Option[AuthorId] = Some(AuthorId(str))
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
 
-    case GET -> Root => Ok(otherRepo.findAllAuthorsSkunk)
+    case GET -> Root => Ok(otherRepo.findAllAuthors)
 //      for {
 //       authors <- Concurrent[F].start(repository.findAllAuthors)
 //       fib <- authors.join
@@ -37,20 +38,21 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F], otherRepo: Authors
 
     case GET -> Root / AuthorIdVar(id) =>
       for {
-        a <- repository.findAuthorById(id)
+//        a <- repository.findAuthorById(id)
+        a <- otherRepo.findAuthorById(id)
         res <- a.fold(NotFound())(Ok(_))
       } yield res
 
     case req @ POST -> Root =>
       for {
-        dto <- req.decodeJson[AuthorDto]
+        dto <- req.asJsonDecode[AuthorDto]
         a = AuthorDto.toDomain(dto)
         res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>
       for {
-        author <- repository.findAuthorById(id)
+        author <- repository.findUserById(id.value)
         res <- author.fold(NotFound())(a =>
           val verified = a.copy(
             email = a.email.copy(status = EmailStatus.Verified)
@@ -62,8 +64,8 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F], otherRepo: Authors
 
     case req @ PUT -> Root / AuthorIdVar(id) =>
       for {
-        dto <- req.decodeJson[AuthorDto]
-        author <- repository.findAuthorById(id)
+        dto <- req.asJsonDecode[AuthorDto]
+        author <- otherRepo.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
           val newInfo = a.copy(
             name = Name(dto.name),
@@ -76,7 +78,7 @@ class AuthorService[F[_]: Concurrent](repository: Authors[F], otherRepo: Authors
 
     case DELETE -> Root / AuthorIdVar(id) =>
       for {
-        res <- repository.delete(id)
+        res <- repository.delete(id.value)
         y <- res.fold(_ => NotFound(), _ => NoContent())
       } yield y
   }
