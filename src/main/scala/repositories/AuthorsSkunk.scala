@@ -14,6 +14,7 @@ trait AuthorsSkunk[F[_]]:
   def findAuthorById(id: AuthorId): F[Option[Author]]
   def create(author: Author): F[Author]
   def update(author: Author): F[Author]
+  def delete(authorId: AuthorId): F[Unit]
 
 object AuthorsSkunk:
   import AuthorSql.*
@@ -34,14 +35,18 @@ object AuthorsSkunk:
       override def update(author: Author): F[Author] = pg.use(_.use { session =>
         session.prepare(updateUser).use(_.execute(author)).as(author)
       })
+
+      override def delete(authorId: AuthorId): F[Unit] = pg.use(_.use { session =>
+        session.prepare(deleteUser).use(_.execute(authorId)).void
+    })
     }
 
 private object AuthorSql:
   val decoder: Decoder[Author] =
     ( varchar ~ varchar ~ varchar ~ varchar ~ date ).map {
-      case id ~ name ~ email ~ status ~ join =>
+      case idd ~ name ~ email ~ status ~ join =>
         Author(
-          AuthorId(id),
+          AuthorId(idd),
           Name(name),
           Email(
             EmailAddress(email),
@@ -51,12 +56,12 @@ private object AuthorSql:
         )
     }
 
-//  val encoder: Encoder[Author] =
-//    (
-//      author
-//    ).contramap {
-//      case a => a.id.value ~ a.name.value ~ a.email.address.value ~ a.email.status.value ~ a.joinDate.value
-//    }
+  val encoder: Encoder[Author] =
+    (
+      varchar ~ varchar ~ varchar ~ varchar ~ date
+    ).contramap { case a =>
+      a.id.value ~ a.name.value ~ a.email.address.value ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value
+    }
 
   val codec: Codec[Author] =
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
@@ -69,7 +74,8 @@ private object AuthorSql:
         ),
         JoinDate(d)
       )
-    } (a => a.id.value ~ a.name.value ~ a.email.address.value ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
+    } (a =>
+      a.id.value ~ a.name.value ~ a.email.address.value ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
 
   val authorId: Codec[AuthorId] =
     varchar.imap[AuthorId](AuthorId(_))(_.value)
@@ -95,3 +101,8 @@ private object AuthorSql:
         where author_id = $varchar
     """.command.contramap { case Author(id, name, email, _) =>
       name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
+
+  val deleteUser: Command[AuthorId] =
+    sql"""
+        delete from authors where author_id = $varchar
+    """.command.contramap{ case a => a.value }
