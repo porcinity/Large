@@ -13,6 +13,7 @@ trait AuthorsSkunk[F[_]]:
   def findAllAuthors: F[List[Author]]
   def findAuthorById(id: AuthorId): F[Option[Author]]
   def create(author: Author): F[Author]
+  def update(author: Author): F[Author]
 
 object AuthorsSkunk:
   import AuthorSql.*
@@ -28,6 +29,10 @@ object AuthorsSkunk:
 
       override def create(author: Author): F[Author] = pg.use(_.use { session =>
         session.prepare(insertUser).use(_.execute(author)).as(author)
+      })
+
+      override def update(author: Author): F[Author] = pg.use(_.use { session =>
+        session.prepare(updateUser).use(_.execute(author)).as(author)
       })
     }
 
@@ -80,3 +85,13 @@ private object AuthorSql:
         insert into authors
         values ($codec)
         """.command
+
+  val updateUser: Command[Author] =
+    sql"""
+        update authors
+        set author_name = $varchar,
+            author_email = $varchar,
+            author_email_status = $varchar
+        where author_id = $varchar
+    """.command.contramap { case Author(id, name, email, _) =>
+      name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}

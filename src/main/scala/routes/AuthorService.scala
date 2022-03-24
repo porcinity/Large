@@ -12,12 +12,13 @@ import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, Unproces
 import repositories.{Users, AuthorsSkunk}
 import models.Author.Codecs.*
 import models.Author.*
+import cats.Monad
+import cats.implicits.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-import cats.Monad
 import mail.{JavaMailUtil, test}
 
-import cats.syntax.*
+//import cats.syntax.*
 
 class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
@@ -28,18 +29,9 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
 
 
     case GET -> Root => Ok(otherRepo.findAllAuthors)
-//      for {
-//       authors <- Concurrent[F].start(repository.findAllAuthors)
-//       fib <- authors.join
-//       res <- fib match {
-//         case Succeeded(xs) => Ok(xs)
-//         case _ => NotFound()
-//       }
-//      } yield res
 
     case GET -> Root / AuthorIdVar(id) =>
       for {
-//        a <- repository.findAuthorById(id)
         a <- otherRepo.findAuthorById(id)
         res <- a.fold(NotFound())(Ok(_))
       } yield res
@@ -47,7 +39,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[AuthorDto]
-        a = AuthorDto.toDomain(dto)
+        a <- AuthorDto.toDomain(dto).pure[F]
         res <- a.fold(UnprocessableEntity(_), x => Ok(otherRepo.create(x)))
       } yield res
 
@@ -58,7 +50,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
           val verified = a.copy(
             email = a.email.copy(status = EmailStatus.Verified)
           )
-          val updated = repository.update(verified)
+          val updated = otherRepo.update(verified)
           Ok(updated)
         )
       } yield res
