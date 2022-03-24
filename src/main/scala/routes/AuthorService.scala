@@ -71,8 +71,8 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
 
     case DELETE -> Root / AuthorIdVar(id) =>
       for {
-        _ <- otherRepo.delete(id)
-        res <- NoContent()
-      } yield res
+        res <- otherRepo.delete(id)
+        y <- res.fold(NotFound())( _ => NoContent())
+      } yield y
   }
 }

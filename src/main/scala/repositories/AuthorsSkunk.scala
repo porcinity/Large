@@ -14,7 +14,7 @@ trait AuthorsSkunk[F[_]]:
   def findAuthorById(id: AuthorId): F[Option[Author]]
   def create(author: Author): F[Author]
   def update(author: Author): F[Author]
-  def delete(authorId: AuthorId): F[Unit]
+  def delete(authorId: AuthorId): F[Option[Author]]
 
 object AuthorsSkunk:
   import AuthorSql.*
@@ -36,9 +36,9 @@ object AuthorsSkunk:
         session.prepare(updateUser).use(_.execute(author)).as(author)
       })
 
-      override def delete(authorId: AuthorId): F[Unit] = pg.use(_.use { session =>
-        session.prepare(deleteUser).use(_.execute(authorId)).void
-    })
+      override def delete(authorId: AuthorId): F[Option[Author]] = pg.use(_.use { session =>
+        session.prepare(deleteUser).use(ps => ps.option(authorId))
+      })
     }
 
 private object AuthorSql:
@@ -102,7 +102,7 @@ private object AuthorSql:
     """.command.contramap { case Author(id, name, email, _) =>
       name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
 
-  val deleteUser: Command[AuthorId] =
+  val deleteUser: Query[AuthorId, Author] =
     sql"""
-        delete from authors where author_id = $varchar
-    """.command.contramap{ case a => a.value }
+        delete from authors where author_id = $authorId returning *
+    """.query(decoder)
