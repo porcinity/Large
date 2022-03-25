@@ -36,14 +36,17 @@ class BlogService[F[_]: Concurrent](repository: BlogsSkunk[F]) extends Http4sDsl
 
 
   object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
+  object OptionalUserIdParamMatch extends OptionalQueryParamDecoderMatcher[String]("user")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 //    case GET -> Root => Ok(repository.findAllBlogs)
 
 
-    case GET -> Root :? OptionalTagQueryParamMatcher(tag) => tag match {
-      case Some(t) => Ok(repository.findByTag(t))
-      case None => Ok(repository.findAllBlogs)
+    case GET -> Root :? OptionalTagQueryParamMatcher(tag) +& OptionalUserIdParamMatch(user) => (tag, user) match {
+      case (Some(t), Some(u)) => Ok(repository.findByTagAndUser(t, u))
+      case (Some(t), None) => Ok(repository.findByTag(t))
+      case (None, Some(u)) => Ok(repository.findByUser(u))
+      case (None, None) => Ok(repository.findAllBlogs)
     }
 
     case GET -> Root / BlogIdVar(id) =>

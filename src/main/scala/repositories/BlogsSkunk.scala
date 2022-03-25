@@ -13,7 +13,9 @@ import cats.syntax.all.*
 trait BlogsSkunk[F[_]]:
   def findAllBlogs: F[List[Blog]]
   def findBlogById(id: BlogId): F[Option[Blog]]
+  def findByUser(user: String): F[List[Blog]]
   def findByTag(tagName: TagName): F[List[Blog]]
+  def findByTagAndUser(tagName: TagName, user: String): F[List[Blog]]
   def create(blog: Blog): F[Blog]
   def update(blog: Blog): F[Blog]
   def delete(blogId: BlogId): F[Option[Blog]]
@@ -31,9 +33,21 @@ object BlogsSkunk:
         }
       })
 
+      override def findByUser(user: String): F[List[Blog]] = postgres.use(_.use { session =>
+        session.prepare(selectByUser).use { ps =>
+          ps.stream(user, 15).compile.toList
+        }
+      })
+
       override def findByTag(tagName: TagName): F[List[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectByTag).use { ps =>
           ps.stream(tagName, 15).compile.toList
+        }
+      })
+
+      override def findByTagAndUser(tagName: TagName, user: String): F[List[Blog]] = postgres.use(_.use { session =>
+        session.prepare(selectByTagAndUser).use { ps =>
+          ps.stream((tagName, user),15).compile.toList
         }
       })
 
@@ -117,6 +131,12 @@ private object BlogsSql:
         insert into blog_tags
         values ($tagEncoder)
     """.command
+    
+  val selectByUser: Query[String, Blog] =
+    sql"""
+        select * from junk
+        where post_author = $varchar
+    """.query(decoder)
 
   val selectByTag: Query[TagName, Blog] =
     sql"""
@@ -124,4 +144,13 @@ private object BlogsSql:
         from junk b, blog_tags t
         where t.blog_id = b.post_id
         and t.tag_name = $tagName
+    """.query(decoder)
+
+  val selectByTagAndUser: Query[TagName ~ String, Blog] =
+    sql"""
+        select b.*
+        from junk b, blog_tags t
+        where t.blog_id = b.post_id
+        and t.tag_name = $tagName
+        and b.post_author = $varchar
     """.query(decoder)
