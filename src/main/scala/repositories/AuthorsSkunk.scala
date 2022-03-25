@@ -60,8 +60,8 @@ private object AuthorSql:
     (
       varchar ~ varchar ~ varchar ~ varchar ~ date
     ).contramap { case a =>
-      a.id.value ~ a.name.value ~ a.email.address.value ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value
-    }
+      a.id.value ~ a.name.value ~ a.email.address.value
+        ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value }
 
   val codec: Codec[Author] =
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
@@ -75,7 +75,8 @@ private object AuthorSql:
         JoinDate(d)
       )
     } (a =>
-      a.id.value ~ a.name.value ~ a.email.address.value ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
+      a.id.value ~ a.name.value ~ a.email.address.value ~
+        EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
 
   val authorId: Codec[AuthorId] =
     varchar.imap[AuthorId](AuthorId(_))(_.value)
