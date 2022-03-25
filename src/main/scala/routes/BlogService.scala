@@ -43,7 +43,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
       for
         dto <- req.decodeJson[BlogDto]
         blog <- BlogDto.toDomain(dto).pure[F]
-        res <- blog.fold(UnprocessableEntity(_), b => Created(repository.insertBlog(b)))
+        res <- blog.fold(UnprocessableEntity(_), b => Created(otherBlog.create(b)))
       yield res
 
     case req @ PUT -> Root / BlogIdVar(id) =>

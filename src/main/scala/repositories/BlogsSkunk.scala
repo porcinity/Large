@@ -8,6 +8,8 @@ import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.temporal.*
 
+import cats.syntax.all.*
+
 trait BlogsSkunk[F[_]]:
   def findAllBlogs: F[List[Blog]]
   def findBlogById(id: BlogId): F[Option[Blog]]
@@ -27,7 +29,9 @@ object BlogsSkunk:
         }
       })
 
-      override def create(blog: Blog): F[Blog] = ???
+      override def create(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+        session.prepare(insertBlog).use(_.execute(blog)).as(blog)
+      })
 
       override def update(blog: Blog): F[Blog] = ???
 
@@ -35,25 +39,38 @@ object BlogsSkunk:
     }
 
 private object BlogsSql:
-  val authorId: Codec[AuthorId] =
-    varchar.imap[AuthorId](AuthorId(_))(_.value)
+  val authorId: Codec[BlogAuthor] =
+    varchar.imap[BlogAuthor](BlogAuthor(_))(_.authorVal)
 
   val blogId: Codec[BlogId] =
     varchar.imap[BlogId](BlogId(_))(_.value)
 
   val decoder: Decoder[Blog] =
-    ( varchar ~ varchar ~ varchar ~ varchar).map {
+    ( blogId ~ varchar ~ varchar ~ authorId).map {
       case bId ~ title ~ content ~ aId =>
         Blog(
-          BlogId(bId),
+          bId,
           BlogTitle(title),
           BlogContent(content),
-          BlogAuthor(aId)
+          aId
         )
+    }
+
+  val encoder: Encoder[Blog] =
+    (
+      varchar ~ varchar ~ varchar ~ varchar
+    ).contramap { case b =>
+      b.id.value ~ b.title.titleVal ~ b.content.v ~ b.author.authorVal
     }
 
   val selectAll: Query[Void, Blog] =
     sql"select * from junk".query(decoder)
-    
+
   val selectById: Query[BlogId, Blog] =
     sql"select * from junk where post_id = $blogId".query(decoder)
+
+  val insertBlog: Command[Blog] =
+    sql"""
+        insert into junk
+        values ($encoder)
+    """.command

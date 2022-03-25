@@ -64,7 +64,7 @@ object Blog:
   object BlogAuthor:
     def apply(value: String): BlogAuthor = value
     def create(value: String): ValidationResult[BlogAuthor] = value.validNec
-    extension (x: BlogAuthor) def authorVal: String = x
+  extension (x: BlogAuthor) def authorVal: String = x
 
 
   implicit val blogCodec: Codec[Blog] = deriveCodec[Blog]
