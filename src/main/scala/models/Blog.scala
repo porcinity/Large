@@ -11,6 +11,7 @@ import com.aventrix.jnanoid.jnanoid.*
 import cats.data.*
 import cats.implicits.*
 import models.ValidationExtractors.*
+import scala.annotation.targetName
 
 object Blog:
   type ValidationError = String
@@ -25,6 +26,7 @@ object Blog:
     def create(value: String): ValidationResult[BlogId] = value.validNec
 
   extension (x: BlogId)
+    @targetName("value_BlogId")
     def value: String = x
 
   opaque type BlogTitle = String
@@ -42,6 +44,7 @@ object Blog:
     }
 
   extension (x: BlogTitle)
+    @targetName("value_BlogTitle")
     def titleVal: String = x
 
   opaque type BlogContent = String
@@ -64,18 +67,20 @@ object Blog:
   object BlogAuthor:
     def apply(value: String): BlogAuthor = value
     def create(value: String): ValidationResult[BlogAuthor] = value.validNec
-  extension (x: BlogAuthor) def authorVal: String = x
+  extension (x: BlogAuthor)
+    @targetName("value_BlogAuthor")
+    def value: String = x
 
 
   implicit val blogCodec: Codec[Blog] = deriveCodec[Blog]
-  implicit val blogRead: Read[Blog] =
-    Read[(String, String, String, String)].map { case (id, title, content, authorId) =>
-      Blog(BlogId(id), BlogTitle(title), BlogContent(content), BlogAuthor(authorId))
-    }
-  implicit val blogWrite: Write[Blog] =
-    Write[(String, String, String, String)].contramap { blog =>
-      (blog.id.value, blog.title.value, blog.content.v, blog.author.value)
-    }
+//  implicit val blogRead: Read[Blog] =
+//    Read[(String, String, String, String)].map { case (id, title, content, authorId) =>
+//      Blog(BlogId(id), BlogTitle(title), BlogContent(content), BlogAuthor(authorId))
+//    }
+//  implicit val blogWrite: Write[Blog] =
+//    Write[(String, String, String, String)].contramap { blog =>
+//      (blog.id.value, blog.title.value, blog.content.v, blog.author.value)
+//    }
 
   case class BlogDto(title: String, content: String, author: String)
 

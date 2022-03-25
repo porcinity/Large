@@ -11,7 +11,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.{Blogs, BlogsSkunk}
+import repositories.{BlogsSkunk}
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*

@@ -49,7 +49,7 @@ object BlogsSkunk:
 
 private object BlogsSql:
   val authorId: Codec[BlogAuthor] =
-    varchar.imap[BlogAuthor](BlogAuthor(_))(_.authorVal)
+    varchar.imap[BlogAuthor](BlogAuthor(_))(_.value)
 
   val blogId: Codec[BlogId] =
     varchar.imap[BlogId](BlogId(_))(_.value)
@@ -69,7 +69,7 @@ private object BlogsSql:
     (
       varchar ~ varchar ~ varchar ~ varchar
     ).contramap { case b =>
-      b.id.value ~ b.title.titleVal ~ b.content.v ~ b.author.authorVal
+      b.id.value ~ b.title.titleVal ~ b.content.v ~ b.author.value
     }
 
   val tagEncoder: Encoder[Tag] =
