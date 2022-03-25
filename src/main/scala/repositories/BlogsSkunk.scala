@@ -3,6 +3,7 @@ package repositories
 import cats.effect.{Concurrent, Resource}
 import models.Tag.*
 import models.Blog.*
+import Codecs.*
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.text.*
@@ -69,17 +70,8 @@ object BlogsSkunk:
     }
 
 private object BlogsSql:
-  val authorId: Codec[BlogAuthor] =
-    varchar.imap[BlogAuthor](BlogAuthor(_))(_.value)
-
-  val blogId: Codec[BlogId] =
-    varchar.imap[BlogId](BlogId(_))(_.value)
-
-  val tagName: Codec[TagName] =
-    varchar.imap[TagName](TagName(_))(_.value)
-
   val decoder: Decoder[Blog] =
-    ( blogId ~ varchar ~ varchar ~ authorId).map {
+    ( blogId ~ varchar ~ varchar ~ blogAuthorId).map {
       case bId ~ title ~ content ~ aId =>
         Blog(
           bId,

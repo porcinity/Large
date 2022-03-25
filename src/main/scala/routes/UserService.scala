@@ -9,7 +9,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.{Users, AuthorsSkunk}
+import repositories.{Users, UsersSkunk}
 import models.User.Codecs.*
 import models.User.*
 import cats.Monad
@@ -20,7 +20,7 @@ import mail.{JavaMailUtil, test}
 
 //import cats.syntax.*
 
-class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) extends Http4sDsl[F] {
+class UserService[F[_]: JsonDecoder: Monad](repository: UsersSkunk[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId(str))
@@ -28,11 +28,11 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
 
-    case GET -> Root => Ok(repository.findAllAuthors)
+    case GET -> Root => Ok(repository.findAllUsers)
 
     case GET -> Root / UserIdVar(id) =>
       for {
-        a <- repository.findAuthorById(id)
+        a <- repository.findUserById(id)
         res <- a.fold(NotFound())(Ok(_))
       } yield res
 
@@ -45,7 +45,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
 
     case GET -> Root / UserIdVar(id) / "verify" =>
       for {
-        author <- repository.findAuthorById(id)
+        author <- repository.findUserById(id)
         res <- author.fold(NotFound())(a =>
           val verified = a.copy(
             email = a.email.copy(status = EmailStatus.Verified)
@@ -58,7 +58,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
         dto <- req.asJsonDecode[UserDto]
-        author <- repository.findAuthorById(id)
+        author <- repository.findUserById(id)
         res <- author.fold(NotFound())(a =>
           val newInfo = a.copy(
             name = Name(dto.name),

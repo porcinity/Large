@@ -3,45 +3,47 @@ package repositories
 
 import cats.effect.{Resource, Concurrent, MonadCancelThrow}
 import models.User.*
+import Codecs.*
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
 
-trait AuthorsSkunk[F[_]]:
-  def findAllAuthors: F[List[User]]
-  def findAuthorById(id: UserId): F[Option[User]]
-  def create(author: User): F[User]
-  def update(author: User): F[User]
-  def delete(authorId: UserId): F[Option[User]]
+trait UsersSkunk[F[_]]:
+  def findAllUsers: F[List[User]]
+  def findUserById(id: UserId): F[Option[User]]
+  def create(user: User): F[User]
+  def update(user: User): F[User]
+  def delete(userId: UserId): F[Option[User]]
 
-object AuthorsSkunk:
-  import AuthorSql.*
-  def make[F[_]: Concurrent](pg: Resource[F, Resource[F, Session[F]]]): AuthorsSkunk[F] =
-    new AuthorsSkunk[F] {
-      override def findAllAuthors: F[List[User]] = pg.use(_.use(_.execute(selectAll)))
+object UsersSkunk:
+  import UsersSql.*
+  def make[F[_]: Concurrent](pg: Resource[F, Resource[F, Session[F]]]): UsersSkunk[F] =
+    new UsersSkunk[F] {
+      override def findAllUsers: F[List[User]] = pg.use(_.use(_.execute(selectAll)))
 
-      override def findAuthorById(id: UserId): F[Option[User]] = pg.use(_.use { session =>
+      override def findUserById(id: UserId): F[Option[User]] = pg.use(_.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
       })
 
-      override def create(author: User): F[User] = pg.use(_.use { session =>
-        session.prepare(insertUser).use(_.execute(author)).as(author)
+      override def create(user: User): F[User] = pg.use(_.use { session =>
+        session.prepare(insertUser).use(_.execute(user)).as(user)
       })
 
-      override def update(author: User): F[User] = pg.use(_.use { session =>
-        session.prepare(updateUser).use(_.execute(author)).as(author)
+      override def update(user: User): F[User] = pg.use(_.use { session =>
+        session.prepare(updateUser).use(_.execute(user)).as(user)
       })
 
-      override def delete(authorId: UserId): F[Option[User]] = pg.use(_.use { session =>
-        session.prepare(deleteUser).use(ps => ps.option(authorId))
+      override def delete(userId: UserId): F[Option[User]] = pg.use(_.use { session =>
+        session.prepare(deleteUser).use(ps => ps.option(userId))
       })
     }
 
-private object AuthorSql:
+private object UsersSql:
+  import repositories.Codecs.*
   val decoder: Decoder[User] =
     ( varchar ~ varchar ~ varchar ~ varchar ~ date ).map {
       case idd ~ name ~ email ~ status ~ join =>
@@ -78,14 +80,13 @@ private object AuthorSql:
       a.id.value ~ a.name.value ~ a.email.address.value ~
         EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
 
-  val authorId: Codec[UserId] =
-    varchar.imap[UserId](UserId(_))(_.value)
+
 
   val selectAll: Query[Void, User] =
     sql"select * from authors".query(decoder)
 
   val selectById: Query[UserId, User] =
-    sql"select * from authors where author_id = $authorId".query(decoder)
+    sql"select * from authors where author_id = $userId".query(decoder)
 
   val insertUser: Command[User] =
     sql"""
@@ -105,5 +106,5 @@ private object AuthorSql:
 
   val deleteUser: Query[UserId, User] =
     sql"""
-        delete from authors where author_id = $authorId returning *
+        delete from authors where author_id = $userId returning *
     """.query(decoder)
