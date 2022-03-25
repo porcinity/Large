@@ -33,7 +33,9 @@ object BlogsSkunk:
         session.prepare(insertBlog).use(_.execute(blog)).as(blog)
       })
 
-      override def update(blog: Blog): F[Blog] = ???
+      override def update(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+        session.prepare(updateBlog).use(_.execute(blog)).as(blog)
+      })
 
       override def delete(blogId: BlogId): F[Option[Blog]] = ???
     }
@@ -74,3 +76,13 @@ private object BlogsSql:
         insert into junk
         values ($encoder)
     """.command
+
+  val updateBlog: Command[Blog] =
+    sql"""
+        update junk
+        set post_title = $varchar,
+            post_content = $varchar
+        where post_id = $blogId
+    """.command.contramap { case Blog(id, title, content, _) =>
+      title.titleVal ~ content.v ~ id
+    }

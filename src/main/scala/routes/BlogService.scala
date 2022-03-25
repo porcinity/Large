@@ -59,7 +59,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
             val blogContent = Lens[Blog, BlogContent](_.content)( c => b => b.copy(content = c))
             val newBlog = b.copy(title = u.title, content = u.content)
             val lensyBoi = blogTitle.replace(u.title)(b)
-            Created(repository.update(lensyBoi))
+            Created(otherBlog.update(newBlog))
       } yield res
 
     case DELETE -> Root / BlogIdVar(id) =>
