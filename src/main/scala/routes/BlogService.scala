@@ -28,14 +28,14 @@ import monocle.macros.syntax.AppliedFocusSyntax
 class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[F]) extends Http4sDsl[F] {
 
   object BlogIdVar:
-    def unapply(str: String): Option[String] = Some(str)
+    def unapply(str: String): Option[BlogId] = Some(BlogId(str))
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root => Ok(otherBlog.findAllBlogs)
 
     case GET -> Root / BlogIdVar(id) =>
       for {
-        blog <- otherBlog.findBlogById(BlogId(id))
+        blog <- otherBlog.findBlogById(id)
         res <- blog.fold(NotFound())(Ok(_))
       } yield res
 
@@ -49,7 +49,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.decodeJson[BlogDto]
-        foundBlog <- repository.findBlogById(id)
+        foundBlog <- otherBlog.findBlogById(id)
         updatedBlog = BlogDto.toDomain(dto)
         res <- (foundBlog, updatedBlog) match
           case (None, _) => NotFound()
@@ -64,8 +64,8 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
 
     case DELETE -> Root / BlogIdVar(id) =>
       for {
-        res <- repository.deleteBlog(id)
-        y <- res.fold(_ => NotFound(), _ => NoContent())
+        res <- otherBlog.delete(id)
+        y <- res.fold(NotFound())( _ => NoContent())
       } yield y
   }
 }

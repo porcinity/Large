@@ -37,7 +37,9 @@ object BlogsSkunk:
         session.prepare(updateBlog).use(_.execute(blog)).as(blog)
       })
 
-      override def delete(blogId: BlogId): F[Option[Blog]] = ???
+      override def delete(blogId: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
+        session.prepare(deleteBlog).use(ps => ps.option(blogId))
+      })
     }
 
 private object BlogsSql:
@@ -86,3 +88,8 @@ private object BlogsSql:
     """.command.contramap { case Blog(id, title, content, _) =>
       title.titleVal ~ content.v ~ id
     }
+    
+  val deleteBlog: Query[BlogId, Blog] =
+    sql"""
+        delete from junk where post_id = $blogId returning *
+    """.query(decoder)
