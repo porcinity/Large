@@ -1,8 +1,9 @@
 package models
 
-import models.Blog.BlogId
+import models.Blog.*
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
+import com.aventrix.jnanoid.jnanoid.*
 
 import scala.annotation.targetName
 
@@ -33,13 +34,14 @@ object Tag:
     def value: String = x
 
   case class Tag(id: TagId, name: TagName, blogId: TaggedBlog)
-  
+
   case class TagDto(name: String)
   object TagDto:
     implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
     def toDomain(dto: TagDto, id: BlogId): Tag =
+      val tagId = NanoIdUtils.randomNanoId()
       Tag(
-        TagId("kewl"),
+        TagId(tagId),
         TagName(dto.name),
         TaggedBlog(id.value)
       )
