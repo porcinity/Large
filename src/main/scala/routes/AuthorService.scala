@@ -20,7 +20,7 @@ import mail.{JavaMailUtil, test}
 
 //import cats.syntax.*
 
-class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: AuthorsSkunk[F]) extends Http4sDsl[F] {
+class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
   object AuthorIdVar:
     def unapply(str: String): Option[AuthorId] = Some(AuthorId(str))
@@ -28,11 +28,11 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
 
-    case GET -> Root => Ok(otherRepo.findAllAuthors)
+    case GET -> Root => Ok(repository.findAllAuthors)
 
     case GET -> Root / AuthorIdVar(id) =>
       for {
-        a <- otherRepo.findAuthorById(id)
+        a <- repository.findAuthorById(id)
         res <- a.fold(NotFound())(Ok(_))
       } yield res
 
@@ -40,17 +40,17 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
       for {
         dto <- req.asJsonDecode[AuthorDto]
         a <- AuthorDto.toDomain(dto).pure[F]
-        res <- a.fold(UnprocessableEntity(_), x => Ok(otherRepo.create(x)))
+        res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
       } yield res
 
     case GET -> Root / AuthorIdVar(id) / "verify" =>
       for {
-        author <- repository.findUserById(id.value)
+        author <- repository.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
           val verified = a.copy(
             email = a.email.copy(status = EmailStatus.Verified)
           )
-          val updated = otherRepo.update(verified)
+          val updated = repository.update(verified)
           Ok(updated)
         )
       } yield res
@@ -58,7 +58,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
     case req @ PUT -> Root / AuthorIdVar(id) =>
       for {
         dto <- req.asJsonDecode[AuthorDto]
-        author <- otherRepo.findAuthorById(id)
+        author <- repository.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
           val newInfo = a.copy(
             name = Name(dto.name),
@@ -71,7 +71,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: Users[F], otherRepo: A
 
     case DELETE -> Root / AuthorIdVar(id) =>
       for {
-        res <- otherRepo.delete(id)
+        res <- repository.delete(id)
         y <- res.fold(NotFound())( _ => NoContent())
       } yield y
   }

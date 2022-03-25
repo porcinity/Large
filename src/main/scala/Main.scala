@@ -47,9 +47,9 @@ object Main extends IOApp:
 
     val blogsSkunk: BlogsSkunk[IO] = BlogsSkunk.make(session)
 
-    val blogService: BlogService[IO] = new BlogService(blogsRepo, blogsSkunk)
+    val blogService: BlogService[IO] = new BlogService(blogsSkunk)
 
-    val authorService: AuthorService[IO] = new AuthorService(usersRepo, skunkRepo)
+    val authorService: AuthorService[IO] = new AuthorService(skunkRepo)
 
     val httpApp = Router(
       "/blogs" -> blogService.routes,

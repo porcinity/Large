@@ -25,17 +25,17 @@ import monocle.macros.GenLens
 import monocle.macros.syntax.AppliedFocusSyntax
 
 // The type constraint of Concurrent is necessary to decode Json
-class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[F]) extends Http4sDsl[F] {
+class BlogService[F[_]: Concurrent](repository: BlogsSkunk[F]) extends Http4sDsl[F] {
 
   object BlogIdVar:
     def unapply(str: String): Option[BlogId] = Some(BlogId(str))
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root => Ok(otherBlog.findAllBlogs)
+    case GET -> Root => Ok(repository.findAllBlogs)
 
     case GET -> Root / BlogIdVar(id) =>
       for {
-        blog <- otherBlog.findBlogById(id)
+        blog <- repository.findBlogById(id)
         res <- blog.fold(NotFound())(Ok(_))
       } yield res
 
@@ -43,13 +43,13 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
       for
         dto <- req.decodeJson[BlogDto]
         blog <- BlogDto.toDomain(dto).pure[F]
-        res <- blog.fold(UnprocessableEntity(_), b => Created(otherBlog.create(b)))
+        res <- blog.fold(UnprocessableEntity(_), b => Created(repository.create(b)))
       yield res
 
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.decodeJson[BlogDto]
-        foundBlog <- otherBlog.findBlogById(id)
+        foundBlog <- repository.findBlogById(id)
         updatedBlog = BlogDto.toDomain(dto)
         res <- (foundBlog, updatedBlog) match
           case (None, _) => NotFound()
@@ -59,12 +59,12 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
             val blogContent = Lens[Blog, BlogContent](_.content)( c => b => b.copy(content = c))
             val newBlog = b.copy(title = u.title, content = u.content)
             val lensyBoi = blogTitle.replace(u.title)(b)
-            Created(otherBlog.update(newBlog))
+            Created(repository.update(newBlog))
       } yield res
 
     case DELETE -> Root / BlogIdVar(id) =>
       for {
-        res <- otherBlog.delete(id)
+        res <- repository.delete(id)
         y <- res.fold(NotFound())( _ => NoContent())
       } yield y
   }
