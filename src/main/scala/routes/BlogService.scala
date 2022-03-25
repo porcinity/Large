@@ -3,7 +3,7 @@ package routes
 import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import models.Blog.*
-import models.Tag.TagDto
+import models.Tag.{TagDto, TagName}
 import org.http4s.HttpRoutes
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
@@ -11,7 +11,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.{BlogsSkunk}
+import repositories.BlogsSkunk
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*
@@ -31,8 +31,19 @@ class BlogService[F[_]: Concurrent](repository: BlogsSkunk[F]) extends Http4sDsl
   object BlogIdVar:
     def unapply(str: String): Option[BlogId] = Some(BlogId(str))
 
+  object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[String]("tag")
+
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root => Ok(repository.findAllBlogs)
+//    case GET -> Root => Ok(repository.findAllBlogs)
+
+
+    case GET -> Root :? OptionalTagQueryParamMatcher(tag) => tag match {
+      case Some(t) => {
+        val tn = TagName(t)
+        Ok(repository.findByTag(tn))
+      }
+      case None => Ok(repository.findAllBlogs)
+    }
 
     case GET -> Root / BlogIdVar(id) =>
       for {

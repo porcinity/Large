@@ -13,6 +13,7 @@ import cats.syntax.all.*
 trait BlogsSkunk[F[_]]:
   def findAllBlogs: F[List[Blog]]
   def findBlogById(id: BlogId): F[Option[Blog]]
+  def findByTag(tagName: TagName): F[List[Blog]]
   def create(blog: Blog): F[Blog]
   def update(blog: Blog): F[Blog]
   def delete(blogId: BlogId): F[Option[Blog]]
@@ -27,6 +28,12 @@ object BlogsSkunk:
       override def findBlogById(id: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
+        }
+      })
+
+      override def findByTag(tagName: TagName): F[List[Blog]] = postgres.use(_.use { session =>
+        session.prepare(selectByTag).use { ps =>
+          ps.stream(tagName, 15).compile.toList
         }
       })
 
@@ -53,6 +60,9 @@ private object BlogsSql:
 
   val blogId: Codec[BlogId] =
     varchar.imap[BlogId](BlogId(_))(_.value)
+
+  val tagName: Codec[TagName] =
+    varchar.imap[TagName](TagName(_))(_.value)
 
   val decoder: Decoder[Blog] =
     ( blogId ~ varchar ~ varchar ~ authorId).map {
@@ -107,3 +117,11 @@ private object BlogsSql:
         insert into blog_tags
         values ($tagEncoder)
     """.command
+
+  val selectByTag: Query[TagName, Blog] =
+    sql"""
+        select b.*
+        from junk b, blog_tags t
+        where t.blog_id = b.post_id
+        and t.tag_name = $tagName
+    """.query(decoder)
