@@ -4,7 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import models.Blog.*
 import models.Tag.{TagDto, TagName}
-import org.http4s.HttpRoutes
+import org.http4s.*
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
@@ -28,20 +28,21 @@ import monocle.macros.syntax.AppliedFocusSyntax
 // The type constraint of Concurrent is necessary to decode Json
 class BlogService[F[_]: Concurrent](repository: BlogsSkunk[F]) extends Http4sDsl[F] {
 
+  implicit val tagCoder: QueryParamDecoder[TagName] =
+    QueryParamDecoder[String].map(TagName.apply)
+
   object BlogIdVar:
     def unapply(str: String): Option[BlogId] = Some(BlogId(str))
 
-  object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[String]("tag")
+
+  object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 //    case GET -> Root => Ok(repository.findAllBlogs)
 
 
     case GET -> Root :? OptionalTagQueryParamMatcher(tag) => tag match {
-      case Some(t) => {
-        val tn = TagName(t)
-        Ok(repository.findByTag(tn))
-      }
+      case Some(t) => Ok(repository.findByTag(t))
       case None => Ok(repository.findAllBlogs)
     }
 
