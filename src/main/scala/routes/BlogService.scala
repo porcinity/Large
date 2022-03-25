@@ -3,6 +3,7 @@ package routes
 import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import models.Blog.*
+import models.Tag.TagDto
 import org.http4s.HttpRoutes
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
@@ -45,6 +46,14 @@ class BlogService[F[_]: Concurrent](repository: BlogsSkunk[F]) extends Http4sDsl
         blog <- BlogDto.toDomain(dto).pure[F]
         res <- blog.fold(UnprocessableEntity(_), b => Created(repository.create(b)))
       yield res
+
+    case req @ POST -> Root / BlogIdVar(id) / "addTag" =>
+      for {
+        dto <- req.asJsonDecode[TagDto]
+        tag <- TagDto.toDomain(dto, id).pure[F]
+        res <- Created(repository.addTag(tag))
+      } yield res
+
 
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {

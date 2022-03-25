@@ -1,13 +1,45 @@
 package models
 
+import models.Blog.BlogId
+import io.circe.Codec
+import io.circe.generic.semiauto.deriveCodec
+
+import scala.annotation.targetName
+
 object Tag:
+  implicit val tagCodec: Codec[Tag] = deriveCodec[Tag]
   opaque type TagId = String
   object TagId:
     def apply(value: String): TagId = value
-  extension (x: TagId) def value: String = x
 
   opaque type TagName = String
   object TagName:
     def apply(value: String): TagName = value
 
-  case class Tag(name: TagName)
+  opaque type TaggedBlog = String
+  object TaggedBlog:
+    def apply(value: String): TaggedBlog = value
+
+  extension (x: TagId)
+    @targetName("value_TagId")
+    def value: String = x
+
+  extension (x: TagName)
+    @targetName("value_TagName")
+    def value: String = x
+
+  extension (x: TaggedBlog)
+    @targetName("value_blogId")
+    def value: String = x
+
+  case class Tag(id: TagId, name: TagName, blogId: TaggedBlog)
+  
+  case class TagDto(name: String)
+  object TagDto:
+    implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
+    def toDomain(dto: TagDto, id: BlogId): Tag =
+      Tag(
+        TagId("kewl"),
+        TagName(dto.name),
+        TaggedBlog(id.value)
+      )

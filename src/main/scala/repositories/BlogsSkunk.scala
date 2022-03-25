@@ -1,7 +1,7 @@
 package repositories
 
 import cats.effect.{Concurrent, Resource}
-import models.Author.AuthorId
+import models.Tag.*
 import models.Blog.*
 import skunk.*
 import skunk.implicits.*
@@ -16,6 +16,7 @@ trait BlogsSkunk[F[_]]:
   def create(blog: Blog): F[Blog]
   def update(blog: Blog): F[Blog]
   def delete(blogId: BlogId): F[Option[Blog]]
+  def addTag(tag: Tag): F[Tag]
 
 object BlogsSkunk:
   import BlogsSql.*
@@ -39,6 +40,10 @@ object BlogsSkunk:
 
       override def delete(blogId: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
         session.prepare(deleteBlog).use(ps => ps.option(blogId))
+      })
+
+      override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
+        session.prepare(insertTag).use(_.execute(tag)).as(tag)
       })
     }
 
@@ -67,6 +72,9 @@ private object BlogsSql:
       b.id.value ~ b.title.titleVal ~ b.content.v ~ b.author.authorVal
     }
 
+  val tagEncoder: Encoder[Tag] =
+    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.blogId.value }
+
   val selectAll: Query[Void, Blog] =
     sql"select * from junk".query(decoder)
 
@@ -93,3 +101,9 @@ private object BlogsSql:
     sql"""
         delete from junk where post_id = $blogId returning *
     """.query(decoder)
+
+  val insertTag: Command[Tag] =
+    sql"""
+        insert into blog_tags
+        values ($tagEncoder)
+    """.command
