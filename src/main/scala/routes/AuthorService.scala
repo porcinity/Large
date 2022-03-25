@@ -10,8 +10,8 @@ import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import repositories.{Users, AuthorsSkunk}
-import models.Author.Codecs.*
-import models.Author.*
+import models.User.Codecs.*
+import models.User.*
 import cats.Monad
 import cats.implicits.*
 import cats.syntax.flatMap.*
@@ -22,15 +22,15 @@ import mail.{JavaMailUtil, test}
 
 class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) extends Http4sDsl[F] {
 
-  object AuthorIdVar:
-    def unapply(str: String): Option[AuthorId] = Some(AuthorId(str))
+  object UserIdVar:
+    def unapply(str: String): Option[UserId] = Some(UserId(str))
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
 
     case GET -> Root => Ok(repository.findAllAuthors)
 
-    case GET -> Root / AuthorIdVar(id) =>
+    case GET -> Root / UserIdVar(id) =>
       for {
         a <- repository.findAuthorById(id)
         res <- a.fold(NotFound())(Ok(_))
@@ -38,12 +38,12 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
 
     case req @ POST -> Root =>
       for {
-        dto <- req.asJsonDecode[AuthorDto]
-        a <- AuthorDto.toDomain(dto).pure[F]
+        dto <- req.asJsonDecode[UserDto]
+        a <- UserDto.toDomain(dto).pure[F]
         res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
       } yield res
 
-    case GET -> Root / AuthorIdVar(id) / "verify" =>
+    case GET -> Root / UserIdVar(id) / "verify" =>
       for {
         author <- repository.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
@@ -55,9 +55,9 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
         )
       } yield res
 
-    case req @ PUT -> Root / AuthorIdVar(id) =>
+    case req @ PUT -> Root / UserIdVar(id) =>
       for {
-        dto <- req.asJsonDecode[AuthorDto]
+        dto <- req.asJsonDecode[UserDto]
         author <- repository.findAuthorById(id)
         res <- author.fold(NotFound())(a =>
           val newInfo = a.copy(
@@ -69,7 +69,7 @@ class AuthorService[F[_]: JsonDecoder: Monad](repository: AuthorsSkunk[F]) exten
         )
       } yield res
 
-    case DELETE -> Root / AuthorIdVar(id) =>
+    case DELETE -> Root / UserIdVar(id) =>
       for {
         res <- repository.delete(id)
         y <- res.fold(NotFound())( _ => NoContent())

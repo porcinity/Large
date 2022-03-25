@@ -16,17 +16,17 @@ import scala.annotation.targetName
 import cats.data.*
 import cats.implicits.*
 
-object Author:
+object User:
 
   object Codecs:
-    implicit val dtoCodec: Codec[AuthorDto] = deriveCodec[AuthorDto]
-    implicit val authorCodec: Codec[Author] = deriveCodec[Author]
-    implicit val authorRead: Read[Author] =
+    implicit val dtoCodec: Codec[UserDto] = deriveCodec[UserDto]
+    implicit val authorCodec: Codec[User] = deriveCodec[User]
+    implicit val authorRead: Read[User] =
       Read[(String, String, String, String, LocalDate)].map { case (id, name, emailAdd, verified, date) =>
         val email = Email(EmailAddress(emailAdd), EmailStatus.fromString(verified))
-        Author(AuthorId(id), Name(name), email, date)
+        User(UserId(id), Name(name), email, date)
       }
-    implicit val authorWrite: Write[Author] =
+    implicit val authorWrite: Write[User] =
       Write[(String, String, String, String, LocalDate)].contramap { author =>
         (
           author.id,
@@ -53,29 +53,14 @@ object Author:
     extension (x: Name)
       def value: String = x
 
-  opaque type Age = Int
+  opaque type UserId = String
 
-  object Age:
-    def apply(value: Int): Age = value
-    def create(value: Int): ValidationResult[Age] = value match
-      case x if x > 100 => "Too old".invalidNec
-      case _ => value.validNec
-
-    extension (x: Age) def value: Int = x
-
-  opaque type Weight = Int
-
-  object Weight:
-    def apply(value: Int): Weight = value
-
-  opaque type AuthorId = String
-
-  object AuthorId:
-    def apply(value: String): AuthorId = value
-    def create(value: String): ValidationResult[AuthorId] = value.validNec
-    def value(authorId: AuthorId): String = authorId
-  extension (x: AuthorId) {
-    @targetName("value_AuthorId")
+  object UserId:
+    def apply(value: String): UserId = value
+    def create(value: String): ValidationResult[UserId] = value.validNec
+    def value(authorId: UserId): String = authorId
+  extension (x: UserId) {
+    @targetName("value_UserId")
     def value: String = x
   }
 
@@ -116,21 +101,21 @@ object Author:
       case _ => date.validNec
   extension (x: JoinDate) def value: LocalDate = x
 
-  case class Author(id: AuthorId, name: Name, email: Email, joinDate: JoinDate)
+  case class User(id: UserId, name: Name, email: Email, joinDate: JoinDate)
 
-  case class AuthorDto(name: String, email: String)
+  case class UserDto(name: String, email: String)
 
 
-  object AuthorDto:
-    def toDomain(dto: AuthorDto): ValidationResult[Author] =
+  object UserDto:
+    def toDomain(dto: UserDto): ValidationResult[User] =
       val id = NanoIdUtils.randomNanoId()
       val name = Name.create(dto.name)
       val emailAddress = EmailAddress.create(dto.email)
       val email = (emailAddress, EmailStatus.init).mapN(Email.apply)
 
       (
-        AuthorId.create(id),
+        UserId.create(id),
         Name.create(dto.name),
         email,
         JoinDate.create(LocalDate.now())
-        ).mapN(Author.apply)
+        ).mapN(User.apply)

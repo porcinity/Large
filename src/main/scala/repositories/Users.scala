@@ -5,31 +5,31 @@ import doobie.Transactor
 import doobie.implicits.*
 import doobie.postgres.*
 import doobie.postgres.implicits.*
-import models.Author.*
-import models.Author.Codecs.{authorRead, authorWrite}
+import models.User.*
+import models.User.Codecs.{authorRead, authorWrite}
 import cats.syntax.functor.*
 
 trait Users[F[_]]:
-  def findAllUsers: F[List[Author]]
-  def findUserById(id: String): F[Option[Author]]
-  def create(author: Author): F[Author]
-  def update(author: Author): F[Author]
+  def findAllUsers: F[List[User]]
+  def findUserById(id: String): F[Option[User]]
+  def create(author: User): F[User]
+  def update(author: User): F[User]
   def delete(id: String): F[Either[String, Int]]
 
 object Users:
   def make[F[_]: MonadCancelThrow](postgres: Resource[F, Transactor[F]]): Users[F] =
     new Users[F] {
-      override def findAllUsers: F[List[Author]] = postgres.use { xa =>
+      override def findAllUsers: F[List[User]] = postgres.use { xa =>
         sql"select author_id, author_name, author_email, author_email_status, author_join_date from authors"
-          .query[Author].to[List].transact(xa)
+          .query[User].to[List].transact(xa)
       }
 
-      override def findUserById(id: String): F[Option[Author]] = postgres.use { xa =>
+      override def findUserById(id: String): F[Option[User]] = postgres.use { xa =>
         sql"select author_id, author_name, author_email, author_email_status, author_join_date from authors where author_id = $id"
-          .query[Author].option.transact(xa)
+          .query[User].option.transact(xa)
       }
 
-      override def create(author: Author): F[Author] = postgres.use { xa =>
+      override def create(author: User): F[User] = postgres.use { xa =>
         val id = author.id.value
         val name = author.name.value
         val email = author.email.address.value
@@ -45,7 +45,7 @@ object Users:
           .transact(xa)
       }
 
-      override def update(author: Author): F[Author] = postgres.use { xa =>
+      override def update(author: User): F[User] = postgres.use { xa =>
         val id = author.id.value
         val name = author.name.value
         val email = author.email.address.value

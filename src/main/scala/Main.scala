@@ -53,7 +53,7 @@ object Main extends IOApp:
 
     val httpApp = Router(
       "/blogs" -> blogService.routes,
-      "/authors" -> authorService.routes
+      "/users" -> authorService.routes
     ).orNotFound
 
     for
