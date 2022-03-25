@@ -21,7 +21,11 @@ object BlogsSkunk:
     new BlogsSkunk[F] {
       override def findAllBlogs: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
 
-      override def findBlogById(id: BlogId): F[Option[Blog]] = ???
+      override def findBlogById(id: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
+        session.prepare(selectById).use { ps =>
+          ps.option(id)
+        }
+      })
 
       override def create(blog: Blog): F[Blog] = ???
 
@@ -50,3 +54,6 @@ private object BlogsSql:
 
   val selectAll: Query[Void, Blog] =
     sql"select * from junk".query(decoder)
+    
+  val selectById: Query[BlogId, Blog] =
+    sql"select * from junk where post_id = $blogId".query(decoder)

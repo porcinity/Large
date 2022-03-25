@@ -35,7 +35,7 @@ class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[
 
     case GET -> Root / BlogIdVar(id) =>
       for {
-        blog <- repository.findBlogById(id)
+        blog <- otherBlog.findBlogById(BlogId(id))
         res <- blog.fold(NotFound())(Ok(_))
       } yield res
 
