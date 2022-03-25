@@ -7,7 +7,7 @@ import org.http4s.ember.server.*
 import org.http4s.implicits.*
 import org.http4s.syntax.all.*
 import org.http4s.server.Router
-import repositories.{Users, AuthorsSkunk, Blogs}
+import repositories.{AuthorsSkunk, Blogs, BlogsSkunk, Users}
 import routes.{AuthorService, BlogService}
 import com.comcast.ip4s.{ipv4, port}
 import skunk.*
@@ -45,7 +45,9 @@ object Main extends IOApp:
 
     val skunkRepo: AuthorsSkunk[IO] = AuthorsSkunk.make(session)
 
-    val blogService: BlogService[IO] = new BlogService(blogsRepo)
+    val blogsSkunk: BlogsSkunk[IO] = BlogsSkunk.make(session)
+
+    val blogService: BlogService[IO] = new BlogService(blogsRepo, blogsSkunk)
 
     val authorService: AuthorService[IO] = new AuthorService(usersRepo, skunkRepo)
 

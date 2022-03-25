@@ -10,7 +10,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.Blogs
+import repositories.{Blogs, BlogsSkunk}
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*
@@ -25,13 +25,13 @@ import monocle.macros.GenLens
 import monocle.macros.syntax.AppliedFocusSyntax
 
 // The type constraint of Concurrent is necessary to decode Json
-class BlogService[F[_]: Concurrent](repository: Blogs[F]) extends Http4sDsl[F] {
+class BlogService[F[_]: Concurrent](repository: Blogs[F], otherBlog: BlogsSkunk[F]) extends Http4sDsl[F] {
 
   object BlogIdVar:
     def unapply(str: String): Option[String] = Some(str)
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root => Ok(repository.findAllBlogs)
+    case GET -> Root => Ok(otherBlog.findAllBlogs)
 
     case GET -> Root / BlogIdVar(id) =>
       for {
