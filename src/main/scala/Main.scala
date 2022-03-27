@@ -7,13 +7,14 @@ import org.http4s.ember.server.*
 import org.http4s.implicits.*
 import org.http4s.syntax.all.*
 import org.http4s.server.Router
-import repositories.{UsersSkunk, BlogsSkunk, Users}
-import routes.{UserService, BlogService}
+import repositories.{BlogsSkunk, Users, UsersSkunk}
+import routes.{BlogService, UserService}
 import com.comcast.ip4s.{ipv4, port}
 import skunk.*
 import skunk.codec.text.*
 import skunk.implicits.*
 import natchez.Trace.Implicits.noop
+import org.http4s.server.middleware.Logger
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
@@ -56,12 +57,14 @@ object Main extends IOApp:
       "/users" -> userService.routes
     ).orNotFound
 
+    val finalHttpApp = Logger.httpApp(true, true)(httpApp)
+
     for
       server <- EmberServerBuilder
         .default[IO]
         .withHost(ipv4"0.0.0.0")
         .withPort(port"8080")
-        .withHttpApp(httpApp)
+        .withHttpApp(finalHttpApp)
         .build
         .use(_ => IO.never)
         .as(ExitCode.Success)
