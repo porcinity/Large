@@ -3,7 +3,7 @@ lazy val DoobieVersion = "1.0.0-RC1"
 lazy val CirceVersion = "0.14.1"
 lazy val Http4sVersion = "0.23.11"
 lazy val JUnitVersion = "0.13.3"
-lazy val LogbackVersion = "1.2.10"
+lazy val LogbackVersion = "1.2.11"
 
 lazy val root = project
   .in(file("."))
@@ -36,6 +36,7 @@ lazy val root = project
       "dev.optics" %% "monocle-macro" % "3.1.0",
 
       "org.tpolecat" %% "skunk-core" % "0.3.1",
+//      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
       "ch.qos.logback"  %  "logback-classic"     % LogbackVersion         % Runtime
 
 

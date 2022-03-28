@@ -112,7 +112,7 @@ private object NotesSql:
     """.command.contramap { case Note(id, title, content, _) =>
       title.titleVal ~ content.v ~ id
     }
-    
+
   val deleteBlog: Query[NoteId, Note] =
     sql"""
         delete from notes where note_id = $noteId returning *
