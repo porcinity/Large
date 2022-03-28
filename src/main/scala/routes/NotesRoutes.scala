@@ -42,15 +42,15 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root :? OptionalTagQueryParamMatcher(tag) +& OptionalUserIdParamMatch(user) => (tag, user) match {
-      case (Some(t), Some(u)) => Ok(repository.findByTagAndUser(t, u))
-      case (Some(t), None) => Ok(repository.findByTag(t))
-      case (None, Some(u)) => Ok(repository.findByUser(u))
-      case (None, None) => Ok(repository.findAllBlogs)
+      case (Some(t), Some(u)) => Ok(repository.findNoteByTagAndUser(t, u))
+      case (Some(t), None) => Ok(repository.findNoteByTag(t))
+      case (None, Some(u)) => Ok(repository.findNoteByUser(u))
+      case (None, None) => Ok(repository.findAllNotes)
     }
 
     case GET -> Root / BlogIdVar(id) =>
       for {
-        blog <- repository.findBlogById(id)
+        blog <- repository.findNoteById(id)
         res <- blog.fold(NotFound())(Ok(_))
       } yield res
 
@@ -72,7 +72,7 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.decodeJson[NoteDto]
-        foundBlog <- repository.findBlogById(id)
+        foundBlog <- repository.findNoteById(id)
         updatedBlog = NoteDto.toDomain(dto)
         res <- (foundBlog, updatedBlog) match
           case (None, _) => NotFound()
