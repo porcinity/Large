@@ -16,26 +16,24 @@ import scala.annotation.targetName
 import cats.data.*
 import cats.implicits.*
 
+import org.latestbit.circe.adt.codec._
 object User:
 
   object Codecs:
     implicit val dtoCodec: Codec[UserDto] = deriveCodec[UserDto]
-    implicit val authorCodec: Codec[User] = deriveCodec[User]
-    implicit val authorRead: Read[User] =
-      Read[(String, String, String, String, LocalDate)].map { case (id, name, emailAdd, verified, date) =>
-        val email = Email(EmailAddress(emailAdd), EmailStatus.fromString(verified))
-        User(UserId(id), Name(name), email, date)
-      }
-    implicit val authorWrite: Write[User] =
-      Write[(String, String, String, String, LocalDate)].contramap { author =>
-        (
-          author.id,
-          author.name,
-          author.email.address,
-          EmailStatus.makeString(author.email.status),
-          author.joinDate
-        )
-      }
+    implicit val userCodec: Codec[User] = deriveCodec[User]
+    implicit val userRespCodec: Codec[SingleUser] = deriveCodec[SingleUser]
+    implicit val listResCodec: Codec[ListOfUsers] = deriveCodec
+    implicit val validationCodec: Codec[ErrorResponse] = deriveCodec
+
+  case class SingleUser(data: User)
+  case class ListOfUsers(data: List[User])
+  case class ErrorResponse(status: HttpStatus, message: String, errors: Option[List[String]])
+
+  enum HttpStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
+    case Ok
+    case UnprocessableEntity
+    case NotFound
 
   type ValidationError = String
   type ValidationResult[A] = ValidatedNec[ValidationError, A]
@@ -77,7 +75,6 @@ object User:
     def value: String = x
   }
 
-  import org.latestbit.circe.adt.codec._
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Verified
     case Unverified

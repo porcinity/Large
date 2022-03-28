@@ -16,8 +16,10 @@ import cats.Monad
 import cats.implicits.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
+import io.circe.Json
 import mail.{JavaMailUtil, test}
-
+import models.Note.NoteDto
+import io.circe.syntax.*
 //import cats.syntax.*
 
 class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
@@ -28,19 +30,29 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
 
-    case GET -> Root => Ok(repository.findAllUsers)
+    case GET -> Root =>
+      for {
+        users <- repository.findAllUsers
+        res <- Ok(ListOfUsers(users))
+      } yield res
 
     case GET -> Root / UserIdVar(id) =>
       for {
         a <- repository.findUserById(id)
-        res <- a.fold(NotFound())(Ok(_))
+        res <- a.fold({
+          val err = ErrorResponse(HttpStatus.NotFound, "Entity not found", None).asJson.dropNullValues
+          NotFound(err)
+        })(a => Ok(SingleUser(a)))
       } yield res
 
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[UserDto]
         a <- UserDto.toDomain(dto).pure[F]
-        res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
+        res <- a.fold(e => {
+          val err = ErrorResponse(HttpStatus.UnprocessableEntity, "Validation Errors", Some(e.toList))
+          UnprocessableEntity(err)
+        }, x => Ok(repository.create(x)))
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
@@ -54,6 +66,12 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
           Ok(updated)
         )
       } yield res
+
+    case req @ POST -> Root / UserIdVar(id) / "addNote" =>
+      for {
+        dto <- req.asJsonDecode[NoteDto]
+
+      } yield ???
 
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
