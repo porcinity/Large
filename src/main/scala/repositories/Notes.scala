@@ -2,7 +2,7 @@ package repositories
 
 import cats.effect.{Concurrent, Resource}
 import models.Tag.*
-import models.Blog.*
+import models.Note.*
 import Codecs.*
 import skunk.*
 import skunk.implicits.*
@@ -12,55 +12,55 @@ import skunk.codec.temporal.*
 import cats.syntax.all.*
 
 trait Notes[F[_]]:
-  def findAllBlogs: F[List[Blog]]
-  def findBlogById(id: BlogId): F[Option[Blog]]
-  def findByUser(user: String): F[List[Blog]]
-  def findByTag(tagName: TagName): F[List[Blog]]
-  def findByTagAndUser(tagName: TagName, user: String): F[List[Blog]]
-  def create(blog: Blog): F[Blog]
-  def update(blog: Blog): F[Blog]
-  def delete(blogId: BlogId): F[Option[Blog]]
+  def findAllBlogs: F[List[Note]]
+  def findBlogById(id: NoteId): F[Option[Note]]
+  def findByUser(user: String): F[List[Note]]
+  def findByTag(tagName: TagName): F[List[Note]]
+  def findByTagAndUser(tagName: TagName, user: String): F[List[Note]]
+  def create(blog: Note): F[Note]
+  def update(blog: Note): F[Note]
+  def delete(blogId: NoteId): F[Option[Note]]
   def addTag(tag: Tag): F[Tag]
 
 object Notes:
-  import BlogsSql.*
+  import NotesSql.*
   def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Notes[F] =
     new Notes[F] {
-      override def findAllBlogs: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
+      override def findAllBlogs: F[List[Note]] = postgres.use(_.use(_.execute(selectAll)))
 
-      override def findBlogById(id: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
+      override def findBlogById(id: NoteId): F[Option[Note]] = postgres.use(_.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
       })
 
-      override def findByUser(user: String): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findByUser(user: String): F[List[Note]] = postgres.use(_.use { session =>
         session.prepare(selectByUser).use { ps =>
           ps.stream(user, 15).compile.toList
         }
       })
 
-      override def findByTag(tagName: TagName): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findByTag(tagName: TagName): F[List[Note]] = postgres.use(_.use { session =>
         session.prepare(selectByTag).use { ps =>
           ps.stream(tagName, 15).compile.toList
         }
       })
 
-      override def findByTagAndUser(tagName: TagName, user: String): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findByTagAndUser(tagName: TagName, user: String): F[List[Note]] = postgres.use(_.use { session =>
         session.prepare(selectByTagAndUser).use { ps =>
           ps.stream((tagName, user),15).compile.toList
         }
       })
 
-      override def create(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+      override def create(blog: Note): F[Note] = postgres.use(_.use { session =>
         session.prepare(insertBlog).use(_.execute(blog)).as(blog)
       })
 
-      override def update(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+      override def update(blog: Note): F[Note] = postgres.use(_.use { session =>
         session.prepare(updateBlog).use(_.execute(blog)).as(blog)
       })
 
-      override def delete(blogId: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
+      override def delete(blogId: NoteId): F[Option[Note]] = postgres.use(_.use { session =>
         session.prepare(deleteBlog).use(ps => ps.option(blogId))
       })
 
@@ -69,19 +69,19 @@ object Notes:
       })
     }
 
-private object BlogsSql:
-  val decoder: Decoder[Blog] =
+private object NotesSql:
+  val decoder: Decoder[Note] =
     ( blogId ~ varchar ~ varchar ~ blogAuthorId).map {
       case bId ~ title ~ content ~ aId =>
-        Blog(
+        Note(
           bId,
-          BlogTitle(title),
-          BlogContent(content),
+          NoteTitle(title),
+          NoteContent(content),
           aId
         )
     }
 
-  val encoder: Encoder[Blog] =
+  val encoder: Encoder[Note] =
     (
       varchar ~ varchar ~ varchar ~ varchar
     ).contramap { case b =>
@@ -91,29 +91,29 @@ private object BlogsSql:
   val tagEncoder: Encoder[Tag] =
     ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.blogId.value }
 
-  val selectAll: Query[Void, Blog] =
+  val selectAll: Query[Void, Note] =
     sql"select * from junk".query(decoder)
 
-  val selectById: Query[BlogId, Blog] =
+  val selectById: Query[NoteId, Note] =
     sql"select * from junk where post_id = $blogId".query(decoder)
 
-  val insertBlog: Command[Blog] =
+  val insertBlog: Command[Note] =
     sql"""
         insert into junk
         values ($encoder)
     """.command
 
-  val updateBlog: Command[Blog] =
+  val updateBlog: Command[Note] =
     sql"""
         update junk
         set post_title = $varchar,
             post_content = $varchar
         where post_id = $blogId
-    """.command.contramap { case Blog(id, title, content, _) =>
+    """.command.contramap { case Note(id, title, content, _) =>
       title.titleVal ~ content.v ~ id
     }
     
-  val deleteBlog: Query[BlogId, Blog] =
+  val deleteBlog: Query[NoteId, Note] =
     sql"""
         delete from junk where post_id = $blogId returning *
     """.query(decoder)
@@ -124,13 +124,13 @@ private object BlogsSql:
         values ($tagEncoder)
     """.command
     
-  val selectByUser: Query[String, Blog] =
+  val selectByUser: Query[String, Note] =
     sql"""
         select * from junk
         where post_author = $varchar
     """.query(decoder)
 
-  val selectByTag: Query[TagName, Blog] =
+  val selectByTag: Query[TagName, Note] =
     sql"""
         select b.*
         from junk b, blog_tags t
@@ -138,7 +138,7 @@ private object BlogsSql:
         and t.tag_name = $tagName
     """.query(decoder)
 
-  val selectByTagAndUser: Query[TagName ~ String, Blog] =
+  val selectByTagAndUser: Query[TagName ~ String, Note] =
     sql"""
         select b.*
         from junk b, blog_tags t
