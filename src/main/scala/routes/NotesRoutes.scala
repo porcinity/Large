@@ -27,7 +27,7 @@ import monocle.macros.syntax.AppliedFocusSyntax
 import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class BlogService[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
+class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.apply)
