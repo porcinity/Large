@@ -13,7 +13,7 @@ object Codecs:
   val blogAuthorId: Codec[NoteAuthor] =
     varchar.imap[NoteAuthor](NoteAuthor(_))(_.value)
 
-  val blogId: Codec[NoteId] =
+  val noteId: Codec[NoteId] =
     varchar.imap[NoteId](NoteId(_))(_.value)
 
   val tagName: Codec[TagName] =
