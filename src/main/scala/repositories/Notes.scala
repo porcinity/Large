@@ -71,10 +71,10 @@ object Notes:
 
 private object NotesSql:
   val decoder: Decoder[Note] =
-    ( blogId ~ varchar ~ varchar ~ blogAuthorId).map {
-      case bId ~ title ~ content ~ aId =>
+    ( noteId ~ varchar ~ varchar ~ blogAuthorId).map {
+      case nId ~ title ~ content ~ aId =>
         Note(
-          bId,
+          nId,
           NoteTitle(title),
           NoteContent(content),
           aId
@@ -89,13 +89,13 @@ private object NotesSql:
     }
 
   val tagEncoder: Encoder[Tag] =
-    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.blogId.value }
+    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.noteId.value }
 
   val selectAll: Query[Void, Note] =
     sql"select * from notes".query(decoder)
 
   val selectById: Query[NoteId, Note] =
-    sql"select * from notes where note_id = $blogId".query(decoder)
+    sql"select * from notes where note_id = $noteId".query(decoder)
 
   val insertBlog: Command[Note] =
     sql"""
@@ -108,14 +108,14 @@ private object NotesSql:
         update notes
         set note_title = $varchar,
             note_content = $varchar
-        where note_id = $blogId
+        where note_id = $noteId
     """.command.contramap { case Note(id, title, content, _) =>
       title.titleVal ~ content.v ~ id
     }
     
   val deleteBlog: Query[NoteId, Note] =
     sql"""
-        delete from notes where note_id = $blogId returning *
+        delete from notes where note_id = $noteId returning *
     """.query(decoder)
 
   val insertTag: Command[Tag] =
