@@ -11,7 +11,7 @@ import skunk.codec.temporal.*
 
 import cats.syntax.all.*
 
-trait BlogsSkunk[F[_]]:
+trait Notes[F[_]]:
   def findAllBlogs: F[List[Blog]]
   def findBlogById(id: BlogId): F[Option[Blog]]
   def findByUser(user: String): F[List[Blog]]
@@ -22,10 +22,10 @@ trait BlogsSkunk[F[_]]:
   def delete(blogId: BlogId): F[Option[Blog]]
   def addTag(tag: Tag): F[Tag]
 
-object BlogsSkunk:
+object Notes:
   import BlogsSql.*
-  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): BlogsSkunk[F] =
-    new BlogsSkunk[F] {
+  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Notes[F] =
+    new Notes[F] {
       override def findAllBlogs: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
 
       override def findBlogById(id: BlogId): F[Option[Blog]] = postgres.use(_.use { session =>
