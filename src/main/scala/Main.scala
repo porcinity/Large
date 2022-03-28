@@ -22,7 +22,7 @@ object Main extends IOApp:
         port = 5432,
         user = "anthony",
         password = Some("itb"),
-        database = "blog",
+        database = "Notes",
         max = 10
       )
 

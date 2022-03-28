@@ -92,57 +92,57 @@ private object NotesSql:
     ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.blogId.value }
 
   val selectAll: Query[Void, Note] =
-    sql"select * from junk".query(decoder)
+    sql"select * from notes".query(decoder)
 
   val selectById: Query[NoteId, Note] =
-    sql"select * from junk where post_id = $blogId".query(decoder)
+    sql"select * from notes where note_id = $blogId".query(decoder)
 
   val insertBlog: Command[Note] =
     sql"""
-        insert into junk
+        insert into notes
         values ($encoder)
     """.command
 
   val updateBlog: Command[Note] =
     sql"""
-        update junk
-        set post_title = $varchar,
-            post_content = $varchar
-        where post_id = $blogId
+        update notes
+        set note_title = $varchar,
+            note_content = $varchar
+        where note_id = $blogId
     """.command.contramap { case Note(id, title, content, _) =>
       title.titleVal ~ content.v ~ id
     }
     
   val deleteBlog: Query[NoteId, Note] =
     sql"""
-        delete from junk where post_id = $blogId returning *
+        delete from notes where note_id = $blogId returning *
     """.query(decoder)
 
   val insertTag: Command[Tag] =
     sql"""
-        insert into blog_tags
+        insert into tag_map
         values ($tagEncoder)
     """.command
     
   val selectByUser: Query[String, Note] =
     sql"""
-        select * from junk
-        where post_author = $varchar
+        select * from notes
+        where note_author = $varchar
     """.query(decoder)
 
   val selectByTag: Query[TagName, Note] =
     sql"""
-        select b.*
-        from junk b, blog_tags t
-        where t.blog_id = b.post_id
-        and t.tag_name = $tagName
+        select n.*
+        from notes n, tag_map t
+        where t.note_id = n.note_id
+        and t.tag_id = $tagName
     """.query(decoder)
 
   val selectByTagAndUser: Query[TagName ~ String, Note] =
     sql"""
-        select b.*
-        from junk b, blog_tags t
-        where t.blog_id = b.post_id
-        and t.tag_name = $tagName
-        and b.post_author = $varchar
+        select n.*
+        from notes n, tag_map t
+        where t.note_id = n.note_id
+        and t.tag_id = $tagName
+        and n.note_author = $varchar
     """.query(decoder)

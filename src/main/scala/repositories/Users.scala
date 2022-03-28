@@ -81,28 +81,28 @@ private object UsersSql:
         EmailStatus.makeString(u.email.status) ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
-    sql"select * from authors".query(decoder)
+    sql"select * from users".query(decoder)
 
   val selectById: Query[UserId, User] =
-    sql"select * from authors where author_id = $userId".query(decoder)
+    sql"select * from users where user_id = $userId".query(decoder)
 
   val insertUser: Command[User] =
     sql"""
-        insert into authors
+        insert into users
         values ($codec)
         """.command
 
   val updateUser: Command[User] =
     sql"""
-        update authors
-        set author_name = $varchar,
-            author_email = $varchar,
-            author_email_status = $varchar
-        where author_id = $varchar
+        update users
+        set username = $varchar,
+            user_email_address = $varchar,
+            user_email_status = $varchar
+        where user_id = $varchar
     """.command.contramap { case User(id, name, email, _) =>
       name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
 
   val deleteUser: Query[UserId, User] =
     sql"""
-        delete from authors where author_id = $userId returning *
+        delete from users where user_id = $userId returning *
     """.query(decoder)
