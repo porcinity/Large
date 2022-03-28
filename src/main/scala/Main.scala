@@ -4,7 +4,7 @@ import org.http4s.ember.server.*
 import org.http4s.implicits.*
 import org.http4s.syntax.all.*
 import org.http4s.server.Router
-import repositories.{Notes, UsersSkunk}
+import repositories.{Notes, Users}
 import routes.{NotesRoutes, UserService}
 import com.comcast.ip4s.{ipv4, port}
 import skunk.*
@@ -26,7 +26,7 @@ object Main extends IOApp:
         max = 10
       )
 
-    val usersRepo: UsersSkunk[IO] = UsersSkunk.make(session)
+    val usersRepo: Users[IO] = Users.make(session)
 
     val notesRepo: Notes[IO] = Notes.make(session)
 

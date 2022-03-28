@@ -9,7 +9,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.{Users, UsersSkunk}
+import repositories.{Notes, Users}
 import models.User.Codecs.*
 import models.User.*
 import cats.Monad
@@ -20,7 +20,7 @@ import mail.{JavaMailUtil, test}
 
 //import cats.syntax.*
 
-class UserService[F[_]: JsonDecoder: Monad](repository: UsersSkunk[F]) extends Http4sDsl[F] {
+class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId(str))

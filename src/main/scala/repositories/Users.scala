@@ -10,17 +10,17 @@ import skunk.codec.text.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
 
-trait UsersSkunk[F[_]]:
+trait Users[F[_]]:
   def findAllUsers: F[List[User]]
   def findUserById(id: UserId): F[Option[User]]
   def create(user: User): F[User]
   def update(user: User): F[User]
   def delete(userId: UserId): F[Option[User]]
 
-object UsersSkunk:
+object Users:
   import UsersSql.*
-  def make[F[_]: Concurrent](pg: Resource[F, Resource[F, Session[F]]]): UsersSkunk[F] =
-    new UsersSkunk[F] {
+  def make[F[_]: Concurrent](pg: Resource[F, Resource[F, Session[F]]]): Users[F] =
+    new Users[F] {
       override def findAllUsers: F[List[User]] = pg.use(_.use(_.execute(selectAll)))
 
       override def findUserById(id: UserId): F[Option[User]] = pg.use(_.use { session =>
@@ -61,9 +61,9 @@ private object UsersSql:
   val encoder: Encoder[User] =
     (
       varchar ~ varchar ~ varchar ~ varchar ~ date
-    ).contramap { a =>
-      a.id.value ~ a.name.value ~ a.email.address.value
-        ~ EmailStatus.makeString(a.email.status) ~ a.joinDate.value }
+    ).contramap { u =>
+      u.id.value ~ u.name.value ~ u.email.address.value
+        ~ EmailStatus.makeString(u.email.status) ~ u.joinDate.value }
 
   val codec: Codec[User] =
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
@@ -76,11 +76,9 @@ private object UsersSql:
         ),
         JoinDate(d)
       )
-    } (a =>
-      a.id.value ~ a.name.value ~ a.email.address.value ~
-        EmailStatus.makeString(a.email.status) ~ a.joinDate.value)
-
-
+    } (u =>
+      u.id.value ~ u.name.value ~ u.email.address.value ~
+        EmailStatus.makeString(u.email.status) ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
     sql"select * from authors".query(decoder)
