@@ -1,3 +1,7 @@
 .idea
 target
 /src/main/scala/mail
+.bloop
+.metals
+.vscode
+project
