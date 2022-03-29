@@ -22,7 +22,7 @@ import models.Note.NoteDto
 import io.circe.syntax.*
 //import cats.syntax.*
 
-class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
+class UserService[F[_]: JsonDecoder: Monad](repository: Users[F], noteRepo: Notes[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId(str))
@@ -70,8 +70,9 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
     case req @ POST -> Root / UserIdVar(id) / "addNote" =>
       for {
         dto <- req.asJsonDecode[NoteDto]
-
-      } yield ???
+        note <- NoteDto.toDomain(dto).pure[F]
+        res <- note.fold(UnprocessableEntity(_), n => Ok(noteRepo.create(n)))
+      } yield res
 
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
