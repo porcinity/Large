@@ -18,7 +18,7 @@ object ValidationExtractors:
     def unapply(x: String): Boolean = 0 < x.length && x.length <= 150
     
   object LessOrEqual15k:
-    def unapply(x: String): Boolean = x.length > 15000
+    def unapply(x: String): Boolean = 0 < x.length && x.length <= 15000
 
   object NumbersOrChars:
     def unapply(x: String): Boolean = !x.matches("^[a-zA-Z]+$")
