@@ -38,52 +38,46 @@ object User:
   type ValidationError = String
   type ValidationResult[A] = ValidatedNec[ValidationError, A]
 
+  case class User(id: UserId, name: Name, email: Email, joinDate: JoinDate)
+
   opaque type Name = String
 
   object Name:
     def apply(value: String): Name = value
-    def create(value: String): ValidationResult[Name] = value match
-      case EmptyName() => "Name cannot be empty.".invalidNec
-      case FewerThan5() => "Name must be longer than 5 characters.".invalidNec
-      case Over100() => "Name cannot be longer than 100 characters".invalidNec
-      case NumbersOrChars() => "Name cannot contain numbers or special characters.".invalidNec
-      case _ => value.validNec
-    extension (x: Name)
-      def value: String = x
+    def create(value: String): ValidationResult[Name] =
+      val trimmed = value.trim
+      trimmed match
+        case From2to30Chars() => trimmed.validNec
+        case _ => "Name must be from 2 to 30 characters, letters only.".invalidNec
+    extension (x: Name) def value: String = x
 
   opaque type UserId = String
 
   object UserId:
     def apply(value: String): UserId = value
     def create(value: String): ValidationResult[UserId] = value.validNec
-    def value(authorId: UserId): String = authorId
-  extension (x: UserId) {
-    @targetName("value_UserId")
-    def value: String = x
+    extension (x: UserId) {
+      @targetName("value_UserId")
+      def value: String = x
   }
 
   opaque type EmailAddress = String
+
   object EmailAddress:
     def apply(value: String): EmailAddress = value
-    def create(value: String): ValidationResult[EmailAddress] = value match {
-      case EmptyName() => "Empty ass lookin ass email".invalidNec
-      case FewerThan5() => "Email must be longer than 5 characters.".invalidNec
-      case _ => value.validNec
-    }
-  extension (x: EmailAddress) {
-    @targetName("value_EmailAddress")
-    def value: String = x
-  }
+    def create(value: String): ValidationResult[EmailAddress] = value match
+      case ValidEmail() => value.validNec
+      case _ => "Please enter a valid email address.".invalidNec
+    extension (x: EmailAddress) def value: String = x
 
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Verified
     case Unverified
 
   object EmailStatus:
-    def fromString(x: String): EmailStatus = x match {
+    def fromString(x: String): EmailStatus = x match
       case "Verified" => EmailStatus.Verified
       case _ => EmailStatus.Unverified
-    }
     def makeString(vs: EmailStatus): String = vs match
       case Verified => "Verified"
       case Unverified => "Unverified"
@@ -92,23 +86,21 @@ object User:
   case class Email(address: EmailAddress, status: EmailStatus)
 
   opaque type JoinDate = LocalDate
+
   object JoinDate:
     def apply(date: LocalDate): JoinDate = date
     def create (date: LocalDate): ValidationResult[JoinDate] = date match
       case _ => date.validNec
-  extension (x: JoinDate) def value: LocalDate = x
-
-  case class User(id: UserId, name: Name, email: Email, joinDate: JoinDate)
+    extension (x: JoinDate) def value: LocalDate = x
 
   case class UserDto(name: String, email: String)
-
 
   object UserDto:
     def toDomain(dto: UserDto): ValidationResult[User] =
       val id = NanoIdUtils.randomNanoId()
-      val name = Name.create(dto.name)
-      val emailAddress = EmailAddress.create(dto.email)
-      val email = (emailAddress, EmailStatus.init).mapN(Email.apply)
+      val email = (
+        EmailAddress.create(dto.email),
+        EmailStatus.init).mapN(Email.apply)
 
       (
         UserId.create(id),

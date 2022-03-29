@@ -85,7 +85,7 @@ private object NotesSql:
     (
       varchar ~ varchar ~ varchar ~ varchar
     ).contramap { case b =>
-      b.id.value ~ b.title.titleVal ~ b.content.v ~ b.author.value
+      b.id.value ~ b.title.titleVal ~ b.content.valooo ~ b.author.value
     }
 
   val tagEncoder: Encoder[Tag] =
@@ -110,7 +110,7 @@ private object NotesSql:
             note_content = $varchar
         where note_id = $noteId
     """.command.contramap { case Note(id, title, content, _) =>
-      title.titleVal ~ content.v ~ id
+      title.titleVal ~ content.valooo ~ id
     }
 
   val deleteBlog: Query[NoteId, Note] =

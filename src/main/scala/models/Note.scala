@@ -34,33 +34,20 @@ object Note:
   object NoteTitle:
     def apply(value: String): NoteTitle = value
     def create(value: String): ValidationResult[NoteTitle] = value match
-      case EmptyName() => "Note title cannot be empty.".invalidNec
-      case FewerThan5() => "Note title must be longer than 5 characters.".invalidNec
-      case Over150() => "Note title cannot be longer than 150 characters.".invalidNec
-      case _ => value.validNec
-    def createEither(v: String): Either[String, NoteTitle] = v match {
-      case EmptyName() => Left("No empty is bad")
-      case _ => Right(v)
-    }
-
-  extension (x: NoteTitle)
-    @targetName("value_NoteTitle")
-    def titleVal: String = x
+      case LessOrEqual150() => value.validNec
+      case _ => "Note's title must be less than or equal to 150 chars.".invalidNec
+    extension (x: NoteTitle)
+      @targetName("value_NoteTitle")
+      def titleVal: String = x
 
   opaque type NoteContent = String
 
   object NoteContent:
     def apply(value: String): NoteContent = value
     def create(value: String): ValidationResult[NoteContent] = value match
-      case EmptyName() => "Note cannot be empty.".invalidNec
-      case FewerThan5() => "Note must be longer than 5 characters.".invalidNec
-      case Over15k() => "Note must be less than 15,000 characters.".invalidNec
-      case _ => value.validNec
-    def createEither(v: String): Either[String, NoteContent] = v match {
-      case EmptyName() => Left("Content must b here")
-      case _ => Right(v)
-    }
-  extension (x: NoteContent) def v: String = x
+      case LessOrEqual15k() => value.validNec
+      case _ => "Note's content must be less than or equal to 15,000 chars.".invalidNec
+    extension (x: NoteContent) def valooo: String = x
 
   opaque type NoteAuthor = String
 
