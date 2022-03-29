@@ -12,11 +12,10 @@ import com.aventrix.jnanoid.jnanoid.*
 import models.ValidationExtractors.*
 
 import scala.annotation.targetName
-
 import cats.data.*
 import cats.implicits.*
+import org.latestbit.circe.adt.codec.*
 
-import org.latestbit.circe.adt.codec._
 object User:
 
   object Codecs:
