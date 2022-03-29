@@ -36,6 +36,9 @@ lazy val root = project
       "dev.optics" %% "monocle-macro" % "3.1.0",
 
       "org.tpolecat" %% "skunk-core" % "0.3.1",
+      "eu.timepit" %% "refined" % "0.9.28",
+      "eu.timepit" %% "refined-cats" % "0.9.28",
+      "io.circe" %% "circe-refined" % CirceVersion,
 //      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
       "ch.qos.logback"  %  "logback-classic"     % LogbackVersion         % Runtime
 

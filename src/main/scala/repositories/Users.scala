@@ -44,19 +44,19 @@ object Users:
 
 private object UsersSql:
   import repositories.Codecs.*
-  val decoder: Decoder[User] =
-    ( varchar ~ varchar ~ varchar ~ varchar ~ date ).map {
-      case idd ~ name ~ email ~ status ~ join =>
-        User(
-          UserId(idd),
-          Name(name),
-          Email(
-            EmailAddress(email),
-            EmailStatus.fromString(status)
-          ),
-          JoinDate(join)
-        )
-    }
+//  val decoder: Decoder[User] =
+//    ( varchar ~ varchar ~ varchar ~ varchar ~ date ).map {
+//      case idd ~ name ~ email ~ status ~ join =>
+//        User(
+//          idd,
+//          name,
+//          Email(
+//            email,
+//            EmailStatus.fromString(status)
+//          ),
+//          join
+//        )
+//    }
 
   val encoder: Encoder[User] =
     (
@@ -69,9 +69,9 @@ private object UsersSql:
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
       case i ~ n ~ a ~ s ~ d => User(
         UserId(i),
-        Name(n),
+        Username(n),
         Email(
-          EmailAddress(a),
+          EmailAddress.(a),
           EmailStatus.fromString(s)
         ),
         JoinDate(d)
@@ -81,10 +81,10 @@ private object UsersSql:
         EmailStatus.makeString(u.email.status) ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
-    sql"select * from users".query(decoder)
+    sql"select * from users".query(codec)
 
   val selectById: Query[UserId, User] =
-    sql"select * from users where user_id = $userId".query(decoder)
+    sql"select * from users where user_id = $userId".query(codec)
 
   val insertUser: Command[User] =
     sql"""

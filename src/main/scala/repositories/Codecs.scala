@@ -8,7 +8,7 @@ import skunk.codec.text.varchar
 
 object Codecs:
   val userId: Codec[UserId] =
-    varchar.imap[UserId](UserId(_))(_.value)
+    varchar.imap[UserId](UserId.unsafeFrom)(_.value)
 
   val blogAuthorId: Codec[NoteAuthor] =
     varchar.imap[NoteAuthor](NoteAuthor(_))(_.value)

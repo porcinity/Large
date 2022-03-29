@@ -25,7 +25,7 @@ import io.circe.syntax.*
 class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
-    def unapply(str: String): Option[UserId] = Some(UserId(str))
+    def unapply(str: String): Option[UserId] = Some(UserId.unsafeFrom(str))
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
