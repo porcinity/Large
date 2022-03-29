@@ -34,7 +34,7 @@ object Main extends IOApp:
 
     val notesService: NotesRoutes[IO] = new NotesRoutes(notesRepo)
 
-    val userService: UserService[IO] = new UserService(usersRepo, notesRepo)
+    val userService: UserService[IO] = new UserService(usersRepo)
 
     val tagsService: TagsRoutes[IO] = new TagsRoutes[IO](tagsRepo)
 
