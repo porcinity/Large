@@ -8,7 +8,8 @@ import io.circe.generic.auto.*
 
 import java.time.LocalDate
 import com.aventrix.jnanoid.jnanoid.*
-import models.ValidationExtractors.*
+import eu.timepit.refined.boolean.And
+//import models.ValidationExtractors.*
 
 import scala.annotation.targetName
 import cats.data.*
@@ -42,13 +43,11 @@ object User:
   type ValidationError = String
   type ValidationResult[A] = ValidatedNec[ValidationError, A]
 
-  opaque type UserId = NonEmptyString
-  object UserId extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax:
-    def apply(x: String): UserId = x
+  type UserId = NonEmptyFiniteString[30]
+  object UserId extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
 
-  opaque type Username = String
-  object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax:
-    def apply(x: String): Username = x
+  type Username = NonEmptyFiniteString[30]
+  object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
 
   type EmailAddress = NonEmptyString
   object EmailAddress extends RefinedTypeOps[EmailAddress, String] with CatsRefinedTypeOpsSyntax
@@ -86,12 +85,12 @@ object User:
     def toDomain(dto: UserDto) =
       val id = NanoIdUtils.randomNanoId()
       val iddd = UserId.from("")
-      val emailAddress = EmailAddress.from(dto.email).toEitherNec
+      val emailAddress = EmailAddress.from(dto.email).leftMap(_ => "Email address must be in valid format.").toEitherNec
       val email = (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
 
       (
-        UserId.from(id),
-        Username.from(dto.name),
+        UserId.from(id).toEitherNec,
+        Username.from(dto.name).leftMap(_ => "Username must be less than or equal to 50 chars.").toEitherNec,
         email,
         JoinDate.create(LocalDate.now())
         ).parMapN(User.apply)

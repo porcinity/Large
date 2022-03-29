@@ -68,10 +68,10 @@ private object UsersSql:
   val codec: Codec[User] =
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
       case i ~ n ~ a ~ s ~ d => User(
-        UserId(i),
-        Username(n),
+        UserId.unsafeFrom(i),
+        Username.unsafeFrom(n),
         Email(
-          EmailAddress.(a),
+          EmailAddress.unsafeFrom(a),
           EmailStatus.fromString(s)
         ),
         JoinDate(d)
@@ -105,4 +105,4 @@ private object UsersSql:
   val deleteUser: Query[UserId, User] =
     sql"""
         delete from users where user_id = $userId returning *
-    """.query(decoder)
+    """.query(codec)

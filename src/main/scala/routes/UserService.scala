@@ -73,19 +73,19 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
       } yield ???
 
-    case req @ PUT -> Root / UserIdVar(id) =>
-      for {
-        dto <- req.asJsonDecode[UserDto]
-        author <- repository.findUserById(id)
-        res <- author.fold(NotFound())(a =>
-          val newInfo = a.copy(
-            name = Name(dto.name),
-            email = a.email.copy(address = EmailAddress(dto.email))
-          )
-          val updatedAuthor = repository.update(newInfo)
-          Created(updatedAuthor)
-        )
-      } yield res
+//    case req @ PUT -> Root / UserIdVar(id) =>
+//      for {
+//        dto <- req.asJsonDecode[UserDto]
+//        author <- repository.findUserById(id)
+//        res <- author.fold(NotFound())(a =>
+//          val newInfo = a.copy(
+//            name = Username.from(dto.name),
+//            email = a.email.copy(address = EmailAddress(dto.email))
+//          )
+//          val updatedAuthor = repository.update(newInfo)
+//          Created(updatedAuthor)
+//        )
+//      } yield res
 
     case DELETE -> Root / UserIdVar(id) =>
       for {

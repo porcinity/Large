@@ -8,7 +8,7 @@ object ValidationExtractors:
     def unapply(x: String): Boolean = x.length > 100
 
   object Betwen5and100:
-    def unapply(x: String): Boolean = FewerThan5(x)
+    def unapply(x: String): Boolean = ???
     
   object Over150:
     def unapply(x: String): Boolean = x.length > 150
