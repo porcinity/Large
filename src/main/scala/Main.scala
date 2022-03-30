@@ -8,7 +8,6 @@ import repositories.{Notes, Tags, Users}
 import routes.{NotesRoutes, TagsRoutes, UserService}
 import com.comcast.ip4s.{ipv4, port}
 import skunk.*
-import skunk.codec.text.*
 import skunk.implicits.*
 import natchez.Trace.Implicits.noop
 import org.http4s.server.middleware.Logger
@@ -20,8 +19,8 @@ object Main extends IOApp:
       Session.pooled[IO](
         host = "localhost",
         port = 5432,
-        user = "anthony",
-        password = Some("itb"),
+        user = "pigg",
+        password = Some("test"),
         database = "Notes",
         max = 10
       )
