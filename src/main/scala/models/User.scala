@@ -84,7 +84,6 @@ object User:
     import cats.syntax.EitherOps
     def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
       val id = NanoIdUtils.randomNanoId()
-      val iddd = UserId.from("")
       val emailAddress = EmailAddress.from(dto.email).leftMap(_ => "Email address must be in valid format.").toEitherNec
       val email = (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
 
