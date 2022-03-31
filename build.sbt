@@ -34,6 +34,7 @@ lazy val root = project
 
       "dev.optics" %% "monocle-core" % "3.1.0",
       "dev.optics" %% "monocle-macro" % "3.1.0",
+      "dev.optics" %% "monocle-refined" % "3.1.0",
 
       "org.tpolecat" %% "skunk-core" % "0.3.1",
       "eu.timepit" %% "refined" % "0.9.28",
