@@ -45,6 +45,7 @@ object User:
 
   type UserId = NonEmptyFiniteString[30]
   object UserId extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
+//    extension(x: UserId) def value: String = UserId.
 
   type Username = NonEmptyFiniteString[30]
   object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
@@ -82,12 +83,13 @@ object User:
 
   object UserDto:
     import cats.syntax.EitherOps
-    def toDomain(dto: UserDto) =
+    def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
       val id = NanoIdUtils.randomNanoId()
       val iddd = UserId.from("")
       val emailAddress = EmailAddress.from(dto.email).leftMap(_ => "Email address must be in valid format.").toEitherNec
       val email = (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
 
+      val hmm = Username.unsafeFrom("hello")
       (
         UserId.from(id).toEitherNec,
         Username.from(dto.name).leftMap(_ => "Username must be less than or equal to 50 chars.").toEitherNec,

@@ -10,6 +10,8 @@ import skunk.codec.text.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
 
+import eu.timepit.refined.auto.*
+
 trait Users[F[_]]:
   def findAllUsers: F[List[User]]
   def findUserById(id: UserId): F[Option[User]]
@@ -77,7 +79,7 @@ private object UsersSql:
         JoinDate(d)
       )
     } (u =>
-      u.id.value ~ u.name.value ~ u.email.address.value ~
+      autoUnwrap(u.id) ~ autoUnwrap(u.name) ~ autoUnwrap(u.email.address) ~
         EmailStatus.makeString(u.email.status) ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
@@ -100,7 +102,7 @@ private object UsersSql:
             user_email_status = $varchar
         where user_id = $varchar
     """.command.contramap { case User(id, name, email, _) =>
-      name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
+      autoUnwrap(id) ~ autoUnwrap(email.address) ~ EmailStatus.makeString(email.status) ~ autoUnwrap(id)}
 
   val deleteUser: Query[UserId, User] =
     sql"""
