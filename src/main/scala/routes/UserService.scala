@@ -1,7 +1,7 @@
 package routes
 
 import cats.effect.kernel.Outcome.{Errored, Succeeded}
-import cats.effect.{Async, Concurrent, Deferred, Sync, Temporal}
+import cats.effect.{Async, Concurrent, Deferred, Resource, Sync, Temporal}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe.*
@@ -26,6 +26,8 @@ import monocle.syntax.all.*
 import monocle.refined.all.*
 //import cats.syntax.*
 
+
+import UpdateUser.GenericDerivation.*
 class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
@@ -89,6 +91,23 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
           }
         }
       } yield r
+
+    case req @ PUT -> Root / UserIdVar(id) / "adt" =>
+      for {
+        dto <- req.asJsonDecode[UpdateUser]
+        user <- repository.findUserById(id)
+        res <- user.fold(NotFound())(u => {
+          dto match
+            case UpdateNameAndEmail(name, email) => ???
+            case UpdateName(n) => {
+              val up = u.focus(_.name).replace(n)
+              Created(repository.update(up))
+            }
+            case UpdateEmail(e) =>
+              val up = u.focus(_.email.address).replace(e)
+              Created(repository.update(up))
+        })
+      } yield res
 
     case DELETE -> Root / UserIdVar(id) =>
       for {
