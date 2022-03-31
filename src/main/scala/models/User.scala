@@ -105,6 +105,10 @@ object User:
     import cats.syntax.functor._
     import io.circe.{ Decoder, Encoder }, io.circe.generic.auto._
     import io.circe.syntax._
+    import monocle.Prism
+    import monocle.macros.GenPrism
+
+    val rawName: Prism[UpdateUser, UpdateName] = GenPrism[UpdateUser, UpdateName]
 
     object GenericDerivation {
       implicit val encodeEvent: Encoder[UpdateUser] = Encoder.instance {
