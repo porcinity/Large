@@ -76,19 +76,6 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
-        dto <- req.asJsonDecode[UserDto]
-        author <- repository.findUserById(id)
-        newData = UserDto.toDomain(dto)
-        r <- (author, newData) match {
-          case (Some(u), Right(d)) => {
-            val updatedInfo = u.focus(_.email.address).replace(d.email.address)
-            Created(updatedInfo)
-          }
-        }
-      } yield r
-
-    case req @ PUT -> Root / UserIdVar(id) / "adt" =>
-      for {
         dto <- req.asJsonDecode[UpdateUser]
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
