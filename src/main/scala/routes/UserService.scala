@@ -16,10 +16,14 @@ import cats.Monad
 import cats.implicits.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
+import cats.data.Validated.Valid
+import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
 import mail.{JavaMailUtil, test}
 import models.Note.NoteDto
 import io.circe.syntax.*
+import monocle.syntax.all.*
+import monocle.refined.all.*
 //import cats.syntax.*
 
 class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
@@ -73,19 +77,18 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
       } yield ???
 
-//    case req @ PUT -> Root / UserIdVar(id) =>
-//      for {
-//        dto <- req.asJsonDecode[UserDto]
-//        author <- repository.findUserById(id)
-//        res <- author.fold(NotFound())(a =>
-//          val newInfo = a.copy(
-//            name = Username.from(dto.name),
-//            email = a.email.copy(address = EmailAddress(dto.email))
-//          )
-//          val updatedAuthor = repository.update(newInfo)
-//          Created(updatedAuthor)
-//        )
-//      } yield res
+    case req @ PUT -> Root / UserIdVar(id) =>
+      for {
+        dto <- req.asJsonDecode[UserDto]
+        author <- repository.findUserById(id)
+        newData = UserDto.toDomain(dto)
+        r <- (author, newData) match {
+          case (Some(u), Right(d)) => {
+            val updatedInfo = u.focus(_.email.address).replace(d.email.address)
+            Created(updatedInfo)
+          }
+        }
+      } yield r
 
     case DELETE -> Root / UserIdVar(id) =>
       for {
