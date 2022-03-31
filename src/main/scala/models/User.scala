@@ -58,10 +58,9 @@ object User:
     case Unverified
 
   object EmailStatus:
-    def fromString(x: String): EmailStatus = x match {
+    def fromString(x: String): EmailStatus = x match
       case "Verified" => EmailStatus.Verified
       case _ => EmailStatus.Unverified
-    }
     def makeString(vs: EmailStatus): String = vs match
       case Verified => "Verified"
       case Unverified => "Unverified"
@@ -70,6 +69,7 @@ object User:
   case class Email(address: EmailAddress, status: EmailStatus)
 
   opaque type JoinDate = LocalDate
+
   object JoinDate:
     def apply(date: LocalDate): JoinDate = date
     def create (date: LocalDate): EitherNec[String, LocalDate] = date match
