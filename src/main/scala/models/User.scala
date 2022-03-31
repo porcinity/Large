@@ -80,7 +80,6 @@ object User:
 
   case class UserDto(name: String, email: String)
 
-
   object UserDto:
     import cats.syntax.EitherOps
     def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
@@ -96,3 +95,28 @@ object User:
         email,
         JoinDate.create(LocalDate.now())
         ).parMapN(User.apply)
+
+  sealed trait UpdateUser
+  case class UpdateNameAndEmail(name: Username, email: EmailAddress) extends UpdateUser
+  case class UpdateName(name: Username) extends UpdateUser
+  case class UpdateEmail(email: EmailAddress) extends UpdateUser
+
+  object UpdateUser:
+    import cats.syntax.functor._
+    import io.circe.{ Decoder, Encoder }, io.circe.generic.auto._
+    import io.circe.syntax._
+
+    object GenericDerivation {
+      implicit val encodeEvent: Encoder[UpdateUser] = Encoder.instance {
+        case email @ UpdateEmail(_) => email.asJson
+        case name @ UpdateName(_) => name.asJson
+        case both @ UpdateNameAndEmail(_,_) => both.asJson
+      }
+
+      implicit val decodeEvent: Decoder[UpdateUser] =
+        List[Decoder[UpdateUser]](
+          Decoder[UpdateEmail].widen,
+          Decoder[UpdateName].widen,
+          Decoder[UpdateNameAndEmail].widen
+        ).reduceLeft(_ or _)
+  }
