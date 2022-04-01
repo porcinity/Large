@@ -19,7 +19,7 @@ implicit val noteCodec: Codec[Note] = deriveCodec[Note]
 
 object Note:
   type Id = NonEmptyString
-  object NoteId extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
+  object Id extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
   type Title = NonEmptyString
   object Title extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
@@ -36,7 +36,7 @@ object Note:
     implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
     def toDomain(dto: NoteDto): Either[NonEmptyChain[String], Note] =
       val id = NanoIdUtils.randomNanoId()
-      (NoteId.from(id).toEitherNec,
+      (Note.Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
         Author.from(dto.author).toEitherNec
