@@ -29,13 +29,7 @@ object User:
     implicit val GetItemsCodec: Codec[GetItems[User]] = deriveCodec
     implicit val dtoCodec: Codec[UserDto] = deriveCodec[UserDto]
     implicit val userCodec: Codec[User] = deriveCodec[User]
-    implicit val userRespCodec: Codec[SingleUser] = deriveCodec[SingleUser]
-    implicit val listResCodec: Codec[ListOfUsers] = deriveCodec
-    implicit val validationCodec: Codec[ErrorResponse] = deriveCodec
 
-  case class SingleUser(data: User)
-  case class ListOfUsers(data: List[User])
-  case class ErrorResponse(status: HttpStatus, message: String, errors: Option[List[String]])
   case class UserDto(name: String, email: String)
   case class User(id: UserId, name: Username, email: Email, joinDate: JoinDate)
 
