@@ -14,10 +14,11 @@ import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 
-case class Note(id: Note.Id, title: Note.Title, content: Note.Content, author: Note.Author)
-implicit val noteCodec: Codec[Note] = deriveCodec[Note]
 
 object Note:
+  case class Note(id: Id, title: Title, content: Content, author: Author)
+  implicit val noteCodec: Codec[Note] = deriveCodec[Note]
+
   type Id = NonEmptyString
   object Id extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
@@ -36,7 +37,7 @@ object Note:
     implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
     def toDomain(dto: NoteDto): Either[NonEmptyChain[String], Note] =
       val id = NanoIdUtils.randomNanoId()
-      (Note.Id.from(id).toEitherNec,
+      (Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
         Author.from(dto.author).toEitherNec
