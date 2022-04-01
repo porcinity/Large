@@ -35,7 +35,6 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
-
     case GET -> Root =>
       for {
         users <- repository.findAllUsers
@@ -54,18 +53,14 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         a <- UserDto.toDomain(dto).pure[F]
         _ <- JavaMailUtil.main(Array("")).pure[F]
         res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
-        _ <- delay(() => JavaMailUtil.main(Array(""))).start.pure[F]
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
       for {
         author <- repository.findUserById(id)
         res <- author.fold(NotFound())(a =>
-          val verified = a.copy(
-            email = a.email.copy(status = EmailStatus.Verified)
-          )
-          val updated = repository.update(verified)
-          Ok(updated)
+          val verified = a.focus(_.email.status).replace(EmailStatus.Verified)
+          Ok(repository.update(verified))
         )
       } yield res
 
