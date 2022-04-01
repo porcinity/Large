@@ -54,6 +54,7 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         a <- UserDto.toDomain(dto).pure[F]
         _ <- JavaMailUtil.main(Array("")).pure[F]
         res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
+        _ <- delay(() => JavaMailUtil.main(Array(""))).start.pure[F]
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
