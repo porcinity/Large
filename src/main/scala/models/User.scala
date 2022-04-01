@@ -34,6 +34,8 @@ object User:
   case class SingleUser(data: User)
   case class ListOfUsers(data: List[User])
   case class ErrorResponse(status: HttpStatus, message: String, errors: Option[List[String]])
+  case class UserDto(name: String, email: String)
+  case class User(id: UserId, name: Username, email: Email, joinDate: JoinDate)
 
   enum HttpStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Ok
@@ -78,10 +80,6 @@ object User:
     def create (date: LocalDate): EitherNec[String, LocalDate] = date match
       case _ => Right(date)
   extension (x: JoinDate) def value: LocalDate = x
-
-  case class User(id: UserId, name: Username, email: Email, joinDate: JoinDate)
-
-  case class UserDto(name: String, email: String)
 
   object UserDto:
     import cats.syntax.EitherOps
