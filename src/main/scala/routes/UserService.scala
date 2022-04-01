@@ -80,12 +80,15 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
           dto match
-            case UpdateNameAndEmail(name, email) => ???
-            case UpdateName(n) => {
+            case UpdateUser.UpdateNameAndEmail(n, e) => {
+              val up = u.focus(_.name).replace(n).focus(_.email.address).replace(e)
+              Created(repository.update(up))
+            }
+            case UpdateUser.Name(n) => {
               val up = u.focus(_.name).replace(n)
               Created(repository.update(up))
             }
-            case UpdateEmail(e) =>
+            case UpdateUser.Email(e) =>
               val up = u.focus(_.email.address).replace(e)
               Created(repository.update(up))
         })

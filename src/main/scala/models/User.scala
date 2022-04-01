@@ -95,10 +95,10 @@ object User:
         JoinDate.create(LocalDate.now())
         ).parMapN(User.apply)
 
-  sealed trait UpdateUser
-  case class UpdateNameAndEmail(name: Username, email: EmailAddress) extends UpdateUser
-  case class UpdateName(name: Username) extends UpdateUser
-  case class UpdateEmail(email: EmailAddress) extends UpdateUser
+  enum UpdateUser:
+    case Name(name: Username)
+    case Email(email: EmailAddress)
+    case UpdateNameAndEmail(name: Username, email: EmailAddress)
 
   object UpdateUser:
     import cats.syntax.functor._
@@ -107,19 +107,19 @@ object User:
     import monocle.Prism
     import monocle.macros.GenPrism
 
-    val rawName: Prism[UpdateUser, UpdateName] = GenPrism[UpdateUser, UpdateName]
+//    val rawName: Prism[UpdateUser, UpdateName] = GenPrism[UpdateUser, UpdateName]
 
     object GenericDerivation {
       implicit val encodeEvent: Encoder[UpdateUser] = Encoder.instance {
-        case email @ UpdateEmail(_) => email.asJson
-        case name @ UpdateName(_) => name.asJson
         case both @ UpdateNameAndEmail(_,_) => both.asJson
+        case email @ Email(_) => email.asJson
+        case name @ Name(_) => name.asJson
       }
 
       implicit val decodeEvent: Decoder[UpdateUser] =
         List[Decoder[UpdateUser]](
-          Decoder[UpdateEmail].widen,
-          Decoder[UpdateName].widen,
-          Decoder[UpdateNameAndEmail].widen
+          Decoder[UpdateNameAndEmail].widen,
+          Decoder[Email].widen,
+          Decoder[Name].widen
         ).reduceLeft(_ or _)
   }
