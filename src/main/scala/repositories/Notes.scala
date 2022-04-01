@@ -13,13 +13,13 @@ import cats.syntax.all.*
 
 trait Notes[F[_]]:
   def findAllNotes: F[List[Note]]
-  def findNoteById(id: NoteId): F[Option[Note]]
+  def findNoteById(id: Id): F[Option[Note]]
   def findNoteByUser(user: String): F[List[Note]]
   def findNoteByTag(tagName: TagName): F[List[Note]]
   def findNoteByTagAndUser(tagName: TagName, user: String): F[List[Note]]
-  def create(blog: Note): F[Note]
-  def update(blog: Note): F[Note]
-  def delete(blogId: NoteId): F[Option[Note]]
+  def create(note: Note): F[Note]
+  def update(note: Note): F[Note]
+  def delete(noteId: Id): F[Option[Note]]
   def addTag(tag: Tag): F[Tag]
 
 object Notes:
@@ -28,7 +28,7 @@ object Notes:
     new Notes[F] {
       override def findAllNotes: F[List[Note]] = postgres.use(_.use(_.execute(selectAll)))
 
-      override def findNoteById(id: NoteId): F[Option[Note]] = postgres.use(_.use { session =>
+      override def findNoteById(id: Id): F[Option[Note]] = postgres.use(_.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
@@ -52,16 +52,16 @@ object Notes:
         }
       })
 
-      override def create(blog: Note): F[Note] = postgres.use(_.use { session =>
-        session.prepare(insertBlog).use(_.execute(blog)).as(blog)
+      override def create(note: Note): F[Note] = postgres.use(_.use { session =>
+        session.prepare(insertBlog).use(_.execute(note)).as(note)
       })
 
-      override def update(blog: Note): F[Note] = postgres.use(_.use { session =>
-        session.prepare(updateBlog).use(_.execute(blog)).as(blog)
+      override def update(note: Note): F[Note] = postgres.use(_.use { session =>
+        session.prepare(updateBlog).use(_.execute(note)).as(note)
       })
 
-      override def delete(blogId: NoteId): F[Option[Note]] = postgres.use(_.use { session =>
-        session.prepare(deleteBlog).use(ps => ps.option(blogId))
+      override def delete(noteId: Id): F[Option[Note]] = postgres.use(_.use { session =>
+        session.prepare(deleteBlog).use(ps => ps.option(noteId))
       })
 
       override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
@@ -71,12 +71,12 @@ object Notes:
 
 private object NotesSql:
   val decoder: Decoder[Note] =
-    ( noteId ~ varchar ~ varchar ~ blogAuthorId).map {
+    ( noteId ~ varchar ~ varchar ~ noteAuthorId).map {
       case nId ~ title ~ content ~ aId =>
         Note(
           nId,
-          NoteTitle(title),
-          NoteContent(content),
+          Title.unsafeFrom(title),
+          Content.unsafeFrom(content),
           aId
         )
     }
@@ -85,7 +85,7 @@ private object NotesSql:
     (
       varchar ~ varchar ~ varchar ~ varchar
     ).contramap { case b =>
-      b.id.value ~ b.title.titleVal ~ b.content.valooo ~ b.author.value
+      b.id.value ~ b.title.value ~ b.content.value ~ b.author.value
     }
 
   val tagEncoder: Encoder[Tag] =
@@ -94,7 +94,7 @@ private object NotesSql:
   val selectAll: Query[Void, Note] =
     sql"select * from notes".query(decoder)
 
-  val selectById: Query[NoteId, Note] =
+  val selectById: Query[Id, Note] =
     sql"select * from notes where note_id = $noteId".query(decoder)
 
   val insertBlog: Command[Note] =
@@ -110,10 +110,10 @@ private object NotesSql:
             note_content = $varchar
         where note_id = $noteId
     """.command.contramap { case Note(id, title, content, _) =>
-      title.titleVal ~ content.valooo ~ id
+      title.value ~ content.value ~ id
     }
 
-  val deleteBlog: Query[NoteId, Note] =
+  val deleteBlog: Query[Id, Note] =
     sql"""
         delete from notes where note_id = $noteId returning *
     """.query(decoder)
