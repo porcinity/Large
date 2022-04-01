@@ -43,23 +43,23 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
     case GET -> Root / UserIdVar(id) =>
       for {
-        a <- repository.findUserById(id)
-        res <- a.fold(NotFound())(Ok(_))
+        u <- repository.findUserById(id)
+        res <- u.fold(NotFound())(Ok(_))
       } yield res
 
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[UserDto]
-        a <- UserDto.toDomain(dto).pure[F]
+        u <- UserDto.toDomain(dto).pure[F]
         _ <- JavaMailUtil.main(Array("")).pure[F]
-        res <- a.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
+        res <- u.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
       for {
-        author <- repository.findUserById(id)
-        res <- author.fold(NotFound())(a =>
-          val verified = a.focus(_.email.status).replace(EmailStatus.Verified)
+        u <- repository.findUserById(id)
+        res <- u.fold(NotFound())(x =>
+          val verified = x.focus(_.email.status).replace(EmailStatus.Verified)
           Ok(repository.update(verified))
         )
       } yield res
