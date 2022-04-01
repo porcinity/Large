@@ -21,10 +21,12 @@ import eu.timepit.refined.types.string.{NonEmptyFiniteString, NonEmptyString}
 
 import org.latestbit.circe.adt.codec.*
 import io.circe.refined._
-
+import common.{GetItem, GetItems}
 object User:
 
   object Codecs:
+    implicit val GetItemCodec: Codec[GetItem[User]] = deriveCodec
+    implicit val GetItemsCodec: Codec[GetItems[User]] = deriveCodec
     implicit val dtoCodec: Codec[UserDto] = deriveCodec[UserDto]
     implicit val userCodec: Codec[User] = deriveCodec[User]
     implicit val userRespCodec: Codec[SingleUser] = deriveCodec[SingleUser]
