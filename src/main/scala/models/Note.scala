@@ -7,66 +7,37 @@ import io.circe.generic.semiauto.deriveCodec
 import java.time.LocalDate
 import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
-
 import cats.data.*
 import cats.implicits.*
-import models.ValidationExtractors.*
-import scala.annotation.targetName
+import eu.timepit.refined.api.RefinedTypeOps
+import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
+import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.refined.*
+
+case class Note(id: Note.Id, title: Note.Title, content: Note.Content, author: Note.Author)
+implicit val noteCodec: Codec[Note] = deriveCodec[Note]
 
 object Note:
-  type ValidationError = String
-  type ValidationResult[A] = ValidatedNec[ValidationError, A]
+  type Id = NonEmptyString
+  object NoteId extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
-  case class Note(id: NoteId, title: NoteTitle, content: NoteContent, author: NoteAuthor)
+  type Title = NonEmptyString
+  object Title extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
-  opaque type NoteId = String
+  type Content = NonEmptyString
+  object Content extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
-  object NoteId:
-    def apply(value: String): NoteId = value
-    def create(value: String): ValidationResult[NoteId] = value.validNec
-
-  extension (x: NoteId)
-    @targetName("value_NoteId")
-    def value: String = x
-
-  opaque type NoteTitle = String
-
-  object NoteTitle:
-    def apply(value: String): NoteTitle = value
-    def create(value: String): ValidationResult[NoteTitle] = value match
-      case LessOrEqual150() => value.validNec
-      case _ => "Note's title must be less than or equal to 150 chars.".invalidNec
-    extension (x: NoteTitle)
-      @targetName("value_NoteTitle")
-      def titleVal: String = x
-
-  opaque type NoteContent = String
-
-  object NoteContent:
-    def apply(value: String): NoteContent = value
-    def create(value: String): ValidationResult[NoteContent] = value match
-      case LessOrEqual15k() => value.validNec
-      case _ => "Note's content must be less than or equal to 15,000 chars.".invalidNec
-    extension (x: NoteContent) def valooo: String = x
-
-  opaque type NoteAuthor = String
-
-  object NoteAuthor:
-    def apply(value: String): NoteAuthor = value
-    def create(value: String): ValidationResult[NoteAuthor] = value.validNec
-  extension (x: NoteAuthor)
-    @targetName("value_NoteAuthor")
-    def value: String = x
-  
-  implicit val noteCodec: Codec[Note] = deriveCodec[Note]
+  type Author = NonEmptyString
+  object Author extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
   case class NoteDto(title: String, content: String, author: String)
 
   object NoteDto:
     implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
-    def toDomain(dto: NoteDto): ValidationResult[Note] =
+    def toDomain(dto: NoteDto): Either[NonEmptyChain[String], Note] =
       val id = NanoIdUtils.randomNanoId()
-      (NoteId.create(id),
-        NoteTitle.create(dto.title),
-        NoteContent.create(dto.content),
-        NoteAuthor.create(dto.author)).mapN(Note.apply)
+      (NoteId.from(id).toEitherNec,
+        Title.from(dto.title).toEitherNec,
+        Content.from(dto.content).toEitherNec,
+        Author.from(dto.author).toEitherNec
+        ).mapN(Note.apply)
