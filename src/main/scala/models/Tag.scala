@@ -1,6 +1,6 @@
 package models
 
-import models.Note.*
+import models.Note.Id
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 import com.aventrix.jnanoid.jnanoid.*
@@ -43,7 +43,7 @@ object Tag {
   object TagDto:
     implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
 
-    def toDomain(dto: TagDto, id: NoteId): Tag =
+    def toDomain(dto: TagDto, id: Note.Id): Tag =
       val tagId = NanoIdUtils.randomNanoId()
       Tag(
         TagId(tagId),
