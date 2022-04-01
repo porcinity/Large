@@ -79,18 +79,8 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         dto <- req.asJsonDecode[UpdateUser]
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
-          dto match
-            case UpdateUser.UpdateNameAndEmail(n, e) => {
-              val up = u.focus(_.name).replace(n).focus(_.email.address).replace(e)
-              Created(repository.update(up))
-            }
-            case UpdateUser.Name(n) => {
-              val up = u.focus(_.name).replace(n)
-              Created(repository.update(up))
-            }
-            case UpdateUser.Email(e) =>
-              val up = u.focus(_.email.address).replace(e)
-              Created(repository.update(up))
+          val up = UpdateUser.of(dto, u)
+          up.fold(UnprocessableEntity(_), u => Created(repository.update(u)))
         })
       } yield res
 

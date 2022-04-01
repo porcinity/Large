@@ -48,10 +48,13 @@ object User:
 //    extension(x: UserId) def value: String = UserId.
 
   type Username = NonEmptyFiniteString[30]
-  object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
+  object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax:
+    def validate(input: String) =
+      Username.from(input).leftMap(_ => "Username must be less than or equal to 30 chars.").toEitherNec
 
   type EmailAddress = NonEmptyString
-  object EmailAddress extends RefinedTypeOps[EmailAddress, String] with CatsRefinedTypeOpsSyntax
+  object EmailAddress extends RefinedTypeOps[EmailAddress, String] with CatsRefinedTypeOpsSyntax:
+    def validate(input: String) = EmailAddress.from(input).leftMap(_ => "Email must be valid lmao").toEitherNec
 
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Verified
@@ -84,21 +87,21 @@ object User:
     import cats.syntax.EitherOps
     def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
       val id = NanoIdUtils.randomNanoId()
-      val emailAddress = EmailAddress.from(dto.email).leftMap(_ => "Email address must be in valid format.").toEitherNec
+      val emailAddress = EmailAddress.validate(dto.email)
       val email = (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
 
-      val hmm = Username.unsafeFrom("hello")
       (
         UserId.from(id).toEitherNec,
-        Username.from(dto.name).leftMap(_ => "Username must be less than or equal to 50 chars.").toEitherNec,
+        Username.validate(dto.name),
         email,
         JoinDate.create(LocalDate.now())
         ).parMapN(User.apply)
 
   enum UpdateUser:
-    case Name(name: Username)
-    case Email(email: EmailAddress)
-    case UpdateNameAndEmail(name: Username, email: EmailAddress)
+    case Name(name: String)
+    case Email(email: String)
+    case UpdateNameAndEmail(name: String, email: String)
+
 
   object UpdateUser:
     import cats.syntax.functor._
@@ -106,6 +109,21 @@ object User:
     import io.circe.syntax._
     import monocle.Prism
     import monocle.macros.GenPrism
+    import monocle.syntax.all.*
+    import monocle.refined.all.*
+
+    def of(dto: UpdateUser, user: User): Either[NonEmptyChain[String], User] = dto match
+      case UpdateUser.UpdateNameAndEmail(name, email) =>
+        (
+          EmailAddress.validate(email),
+          Username.validate(name)
+          )
+          .parMapN( (e, n) =>
+          user.focus(_.name).replace(n).focus(_.email.address).replace(e))
+      case UpdateUser.Name(n) =>
+        Username.validate(n).map(user.focus(_.name).replace)
+      case UpdateUser.Email(e) =>
+        EmailAddress.validate(e).map(user.focus(_.email.address).replace)
 
 //    val rawName: Prism[UpdateUser, UpdateName] = GenPrism[UpdateUser, UpdateName]
 
