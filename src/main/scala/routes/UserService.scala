@@ -24,10 +24,8 @@ import models.Note.NoteDto
 import io.circe.syntax.*
 import monocle.syntax.all.*
 import monocle.refined.all.*
-//import cats.syntax.*
-
-
 import UpdateUser.GenericDerivation.*
+import common.*
 class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
@@ -38,21 +36,25 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
     case GET -> Root =>
       for {
         users <- repository.findAllUsers
-        res <- Ok(ListOfUsers(users))
+        r = GetItems[User](users)
+        res <- Ok(r)
       } yield res
 
     case GET -> Root / UserIdVar(id) =>
       for {
         u <- repository.findUserById(id)
-        res <- u.fold(NotFound())(Ok(_))
+        res <- u.fold(NotFound())(u => {
+          val item = GetItem[User](u)
+          Ok(item)
+        })
       } yield res
 
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[UserDto]
         u <- UserDto.toDomain(dto).pure[F]
-        _ <- JavaMailUtil.main(Array("")).pure[F]
-        res <- u.fold(UnprocessableEntity(_), x => Ok(repository.create(x)))
+        res <- u.fold(UnprocessableEntity(_), x =>
+          repository.create(x).flatMap(u => Ok(GetItem[User](u))))
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
