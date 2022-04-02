@@ -9,6 +9,8 @@ import io.circe.generic.auto.*
 import java.time.LocalDate
 import com.aventrix.jnanoid.jnanoid.*
 import eu.timepit.refined.boolean.And
+import eu.timepit.refined.string.MatchesRegex
+
 //import models.ValidationExtractors.*
 
 import scala.annotation.targetName
@@ -50,9 +52,12 @@ object User:
     def validate(input: String) =
       Username.from(input).leftMap(_ => "Username must be less than or equal to 30 chars.").toEitherNec
 
-  type EmailAddress = NonEmptyString
-  object EmailAddress extends RefinedTypeOps[EmailAddress, String] with CatsRefinedTypeOpsSyntax:
-    def validate(input: String) = EmailAddress.from(input).leftMap(_ => "Email must be valid lmao").toEitherNec
+  type ValidEmail = Refined[String, MatchesRegex["""^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""]]
+
+  type EmailAddress = ValidEmail
+  object EmailAddress extends RefinedTypeOps[ValidEmail, String] with CatsRefinedTypeOpsSyntax:
+    def validate(input: String): Either[NonEmptyChain[String], EmailAddress] =
+      EmailAddress.from(input).leftMap(_ => "Email must be in valid format.").toEitherNec
 
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Verified
