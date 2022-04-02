@@ -87,22 +87,7 @@ private object UsersSql:
          from users u
          where u.user_id = $userId
          """
-      .query(varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date)
-      .map { case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d => User(
-        UserId.unsafeFrom(i),
-        Username.unsafeFrom(n),
-        Biography.unsafeFrom(b),
-        Email(
-          EmailAddress.unsafeFrom(a),
-          EmailStatus.fromString(s)
-        ),
-        MembershipTier.fromString(t),
-        Followers.unsafeFrom(followers.toInt),
-        Following.unsafeFrom(following.toInt),
-        Liked.unsafeFrom(l.toInt),
-        JoinDate(d)
-      )
-    }
+      .query(codec)
 
   val insertUser: Command[User] =
     sql"""
