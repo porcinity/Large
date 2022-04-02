@@ -11,6 +11,8 @@ import skunk.codec.temporal.*
 import cats.syntax.all.*
 import skunk.codec.all.int8
 
+import java.time.LocalDate
+
 trait Notes[F[_]]:
   def findAllNotes: F[List[Note]]
   def findNoteById(id: Id): F[Option[Note]]
@@ -88,11 +90,9 @@ private object NotesSql:
     }
 
   val encoder: Encoder[Note] =
-    (
-      varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date
-    ).contramap { case Note(id, title, content, author, _, _, _, visibility, publish, edit) =>
-      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value
-    }
+    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date)
+      .contramap { case Note(id, title, content, author, _, _, _, visibility, publish, edit) =>
+      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value }
 
   val tagEncoder: Encoder[Tag] =
     ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.noteId.value }
@@ -126,22 +126,20 @@ private object NotesSql:
 
   val insertNote: Command[Note] =
     sql"""
-        insert into notes(note_id, note_title, note_content, note_author, note_visibility, note_publish_date, note_last_edit_date)
-        values ($varchar, $varchar, $varchar, $varchar, $varchar, $date, $date)
-    """
-      .command
-      .contramap { case Note(id, title, content, author, _, _, _, visibility, publish, edit) =>
-      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value}
+        insert into notes
+        values ($encoder)
+    """.command
 
   val updateNote: Command[Note] =
     sql"""
         update notes
         set note_title = $varchar,
             note_content = $varchar,
-            note_visibility = $varchar
+            note_visibility = $varchar,
+            note_last_edit_date = $date
         where note_id = $noteId
     """.command.contramap { case Note(id, title, content, _, _, _, _, vis, _, _) =>
-      title.value ~ content.value ~ vis.toString ~ id
+      title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
     }
 
   val deleteNote: Query[Id, Note] =
