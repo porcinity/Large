@@ -8,8 +8,8 @@ import skunk.*
 import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.temporal.*
-
 import cats.syntax.all.*
+import skunk.codec.all.int8
 
 trait Notes[F[_]]:
   def findAllNotes: F[List[Note]]
@@ -71,46 +71,77 @@ object Notes:
 
 private object NotesSql:
   val decoder: Decoder[Note] =
-    ( noteId ~ varchar ~ varchar ~ noteAuthorId).map {
-      case nId ~ title ~ content ~ aId =>
+    ( noteId ~ varchar ~ varchar ~ noteAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
+      case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit =>
         Note(
           nId,
           Title.unsafeFrom(title),
           Content.unsafeFrom(content),
-          aId
+          aId,
+          WordCount.unsafeFrom(content.length),
+          ReadingTime.unsafeFrom(content.length / 200.0),
+          Likes.unsafeFrom(likes.toInt),
+          Visibility.fromString(vis),
+          BlogDate(publish),
+          BlogDate(edit)
         )
     }
 
   val encoder: Encoder[Note] =
     (
-      varchar ~ varchar ~ varchar ~ varchar
-    ).contramap { case b =>
-      b.id.value ~ b.title.value ~ b.content.value ~ b.author.value
+      varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date
+    ).contramap { case Note(id, title, content, author, _, _, _, visibility, publish, edit) =>
+      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value
     }
 
   val tagEncoder: Encoder[Tag] =
     ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.noteId.value }
 
   val selectAll: Query[Void, Note] =
-    sql"select * from notes".query(decoder)
+    sql"""
+         select b.note_id,
+                b.note_title,
+                b.note_content,
+                b.note_author,
+                (select count(*) from likes_map l where l.like_blog = b.note_id) as likes,
+                b.note_visibility,
+                b.note_publish_date,
+                b.note_last_edit_date
+         from notes b;
+    """.query(decoder)
 
   val selectById: Query[Id, Note] =
-    sql"select * from notes where note_id = $noteId".query(decoder)
+    sql"""
+         select b.note_id,
+                b.note_title,
+                b.note_content,
+                b.note_author,
+                (select count(*) from likes_map l where l.like_blog = b.note_id) as likes,
+                b.note_visibility,
+                b.note_publish_date,
+                b.note_last_edit_date
+         from notes b
+        where b.note_id = $noteId;
+    """.query(decoder)
 
   val insertNote: Command[Note] =
     sql"""
-        insert into notes
-        values ($encoder)
-    """.command
+        insert into notes(note_id, note_title, note_content, note_author, note_visibility, note_publish_date, note_last_edit_date)
+        values ($varchar, $varchar, $varchar, $varchar, $varchar, $date, $date)
+    """
+      .command
+      .contramap { case Note(id, title, content, author, _, _, _, visibility, publish, edit) =>
+      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value}
 
   val updateNote: Command[Note] =
     sql"""
         update notes
         set note_title = $varchar,
-            note_content = $varchar
+            note_content = $varchar,
+            note_visibility = $varchar
         where note_id = $noteId
-    """.command.contramap { case Note(id, title, content, _) =>
-      title.value ~ content.value ~ id
+    """.command.contramap { case Note(id, title, content, _, _, _, _, vis, _, _) =>
+      title.value ~ content.value ~ vis.toString ~ id
     }
 
   val deleteNote: Query[Id, Note] =
