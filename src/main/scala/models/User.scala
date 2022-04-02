@@ -35,21 +35,12 @@ object User:
   case class UserDto(name: String, email: String)
   case class User(id: UserId, name: Username, email: Email, joinDate: JoinDate)
 
-  enum HttpStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
-    case Ok
-    case UnprocessableEntity
-    case NotFound
-
-  type ValidationError = String
-  type ValidationResult[A] = ValidatedNec[ValidationError, A]
-
   type UserId = NonEmptyFiniteString[30]
   object UserId extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
-//    extension(x: UserId) def value: String = UserId.
 
   type Username = NonEmptyFiniteString[30]
   object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax:
-    def validate(input: String) =
+    def validate(input: String): Either[NonEmptyChain[String], Username] =
       Username.from(input).leftMap(_ => "Username must be less than or equal to 30 chars.").toEitherNec
 
   type ValidEmail = Refined[String, MatchesRegex["""^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""]]
