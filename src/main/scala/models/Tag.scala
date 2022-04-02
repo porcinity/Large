@@ -1,53 +1,40 @@
 package models
 
+import cats.data.NonEmptyChain
 import models.Note.Id
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 import com.aventrix.jnanoid.jnanoid.*
-
-import scala.annotation.targetName
+import eu.timepit.refined.api.RefinedTypeOps
+import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
+import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.refined.*
+import cats.syntax.all.*
 
 object Tag {
 
   case class Tag(id: TagId, name: TagName, noteId: TaggedNote)
+  implicit val tagCodec: Codec[Tag] = deriveCodec
 
-  implicit val tagCodec: Codec[Tag] = deriveCodec[Tag]
-  opaque type TagId = String
+  type TagId = NonEmptyString
+  object TagId extends RefinedTypeOps[TagId, String] with CatsRefinedTypeOpsSyntax
 
-  object TagId:
-    def apply(value: String): TagId = value
+  type TagName = NonEmptyString
+  object TagName extends RefinedTypeOps[TagName, String] with CatsRefinedTypeOpsSyntax
 
-  opaque type TagName = String
-
-  object TagName:
-    def apply(value: String): TagName = value
-  extension (x: TagName)
-    @targetName("value_TagName")
-    def value: String = x
-
-  opaque type TaggedNote = String
-
-  object TaggedNote:
-    def apply(value: String): TaggedNote = value
-
-  extension (x: TagId)
-    @targetName("value_TagId")
-    def value: String = x
-
-  extension (x: TaggedNote)
-    @targetName("value_TaggedNote")
-    def value: String = x
+  type TaggedNote = NonEmptyString
+  object TaggedNote extends RefinedTypeOps[TaggedNote, String] with CatsRefinedTypeOpsSyntax
 
   case class TagDto(name: String)
 
   object TagDto:
     implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
 
-    def toDomain(dto: TagDto, id: Note.Id): Tag =
+    def toDomain(dto: TagDto, id: Note.Id): Either[NonEmptyChain[String], Tag] =
       val tagId = NanoIdUtils.randomNanoId()
-      Tag(
-        TagId(tagId),
-        TagName(dto.name),
-        TaggedNote(id.value)
-      )
+      (
+        TagId.from(tagId).toEitherNec,
+        TagName.from(dto.name).toEitherNec,
+        TaggedNote.from(id.value).toEitherNec
+      ).parMapN(Tag.apply)
 }
