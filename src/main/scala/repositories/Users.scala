@@ -69,10 +69,11 @@ private object UsersSql:
 
   val selectAll: Query[Void, User] =
    sql"""
-    select u.*,
+    select u.user_id, u.username, u.user_bio, u.user_email_address, u.user_email_status, u.user_tier,
        (select count(*) from follows_map f where f.user_id = u.user_id) as followers,
        (select count(*) from follows_map f where f.follower_id = u.user_id) as following,
-       (select count(*) from likes_map l where l.like_user = u.user_id) as likes
+       (select count(*) from likes_map l where l.like_user = u.user_id) as likes,
+       u.user_join_date
     from users u
     """.query(codec)
 
@@ -105,9 +106,12 @@ private object UsersSql:
 
   val insertUser: Command[User] =
     sql"""
-        insert into users
-        values ($codec)
-        """.command
+        insert into users(user_id, username, user_email_address, user_email_status, user_tier, user_join_date, user_bio)
+        values ($varchar, $varchar, $varchar, $varchar, $varchar, $date, $varchar)
+        """
+      .command
+      .contramap { case User(id, name, bio, email, tier, _, _, _, j) =>
+      id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ tier.toString ~ j.value ~ bio.value}
 
   val updateUser: Command[User] =
     sql"""
