@@ -72,10 +72,10 @@ object User:
 
 
   type UserId = NonEmptyFiniteString[30]
-  object UserId extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
+  object UserId extends RefinedTypeOps[UserId, String] with CatsRefinedTypeOpsSyntax
 
   type Username = NonEmptyFiniteString[30]
-  object Username extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax:
+  object Username extends RefinedTypeOps[Username, String] with CatsRefinedTypeOpsSyntax:
     def validate(input: String): Either[NonEmptyChain[String], Username] =
       Username.from(input).leftMap(_ => "Username must be less than or equal to 30 chars.").toEitherNec
 
