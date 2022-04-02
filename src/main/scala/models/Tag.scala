@@ -10,11 +10,14 @@ import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 import cats.syntax.all.*
+import common.*
 
 object Tag {
+  implicit val tagCodec: Codec[Tag] = deriveCodec
+  implicit val getItemCodec: Codec[GetItem[TagName]] = deriveCodec
+  implicit val getItemsCodec: Codec[GetItems[TagName]] = deriveCodec
 
   case class Tag(id: TagId, name: TagName, noteId: TaggedNote)
-  implicit val tagCodec: Codec[Tag] = deriveCodec
 
   type TagId = NonEmptyString
   object TagId extends RefinedTypeOps[TagId, String] with CatsRefinedTypeOpsSyntax

@@ -18,16 +18,17 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
+import common.*
+
 class TagsRoutes[F[_]: Concurrent](repository: Tags[F]) extends Http4sDsl[F]:
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root =>
       for {
         tags <- repository.findAllTags
-        json <- Json.obj(("data", tags.asJson)).pure[F]
-        res <- Ok(json)
+        res <- Ok(GetItems(tags))
       } yield res
-//      Ok(repository.findAllTags)
+
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[TagDto]
