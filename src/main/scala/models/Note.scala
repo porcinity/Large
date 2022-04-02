@@ -73,6 +73,7 @@ object Note:
     def apply(date: LocalDate): BlogDate = date
     val create: Either[NonEmptyChain[String], BlogDate] =
       Right(LocalDate.now())
+    extension (x: BlogDate) def value: LocalDate = x
 
   case class NoteDto(title: String, content: String, author: String, visibility: String)
 
