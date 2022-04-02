@@ -53,8 +53,10 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
       for {
         dto <- req.asJsonDecode[UserDto]
         u <- UserDto.toDomain(dto).pure[F]
-        res <- u.fold(UnprocessableEntity(_), x =>
-          repository.create(x).flatMap(u => Ok(GetItem[User](u))))
+        res <- u.fold(UnprocessableEntity(_), x => {
+          val user = repository.create(x).map(GetItem[User])
+          Ok(user)
+        })
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
