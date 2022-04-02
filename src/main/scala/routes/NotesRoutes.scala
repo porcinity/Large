@@ -3,7 +3,7 @@ package routes
 import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import cats.Monad
-import common.GetItem
+import common.*
 import models.Note.*
 import models.Tag.{TagDto, TagName}
 import org.http4s.*
@@ -46,7 +46,7 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
       case (Some(t), Some(u)) => Ok(repository.findNoteByTagAndUser(t, u))
       case (Some(t), None) => Ok(repository.findNoteByTag(t))
       case (None, Some(u)) => Ok(repository.findNoteByUser(u))
-      case (None, None) => Ok(repository.findAllNotes)
+      case (None, None) => Ok(repository.findAllNotes.map(GetItems.apply))
     }
 
     case GET -> Root / NoteIdVar(id) =>
@@ -59,7 +59,8 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
       for
         dto <- req.asJsonDecode[NoteDto]
         note <- NoteDto.toDomain(dto).pure[F]
-        res <- note.fold(UnprocessableEntity(_), b => Created(repository.create(b)))
+        res <- note.fold(UnprocessableEntity(_), b =>
+          Created(repository.create(b).map(GetItem.apply)))
       yield res
 
     case req @ POST -> Root / NoteIdVar(id) / "addTag" =>
@@ -78,8 +79,8 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
           case (None, _) => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
           case (Some(b), Right(u)) =>
-            val newNote = b.copy(title = u.title, content = u.content)
-            Created(repository.update(newNote))
+            val newNote = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+            Created(repository.update(newNote).map(GetItem.apply))
       } yield res
 
     case DELETE -> Root / NoteIdVar(id) =>
