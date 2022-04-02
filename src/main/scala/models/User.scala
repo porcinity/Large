@@ -33,7 +33,35 @@ object User:
     implicit val userCodec: Codec[User] = deriveCodec
 
   case class UserDto(name: String, email: String)
-  case class User(id: UserId, name: Username, email: Email, joinDate: JoinDate)
+  case class User(
+                   id: UserId,
+                   name: Username,
+                   bio: Biography,
+                   email: Email,
+                   tier: MembershipTier,
+                   followers: Followers,
+                   following: Following,
+                   likedArticles: Liked,
+                   joinDate: JoinDate
+                 )
+
+  enum MembershipTier:
+    case Free
+    case Trial
+    case Premium
+
+  type Liked = PosInt
+  object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax
+
+  type Followers = PosInt
+  object Followers extends RefinedTypeOps[Followers, Int] with CatsRefinedTypeOpsSyntax
+
+  type Following = PosInt
+  object Following extends RefinedTypeOps[Following, Int] with CatsRefinedTypeOpsSyntax
+
+  type Biography = NonEmptyString
+  object Biography extends RefinedTypeOps[Biography, String] with CatsRefinedTypeOpsSyntax
+
 
   type UserId = NonEmptyFiniteString[30]
   object UserId extends RefinedTypeOps[NonEmptyFiniteString[30], String] with CatsRefinedTypeOpsSyntax
