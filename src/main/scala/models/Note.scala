@@ -12,8 +12,10 @@ import cats.implicits.*
 import common.{GetItem, GetItems}
 import eu.timepit.refined.api.RefinedTypeOps
 import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
+import eu.timepit.refined.types.numeric.{NonNegInt, PosDouble, PosFloat, PosInt, PosLong}
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
+import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 
 
@@ -21,8 +23,19 @@ object Note:
   implicit val noteCodec: Codec[Note] = deriveCodec[Note]
   implicit val GetItemCodec: Codec[GetItem[Note]] = deriveCodec
   implicit val GetItemsCodec: Codec[GetItems[Note]] = deriveCodec
-  
-  case class Note(id: Id, title: Title, content: Content, author: Author)
+
+  case class Note(
+                   id: Id,
+                   title: Title,
+                   content: Content,
+                   author: Author,
+                   word_count: WordCount,
+                   reading_time: ReadingTime,
+                   likes: Likes,
+                   visibility: Visibility,
+                   published_on: BlogDate,
+                   last_updated: BlogDate,
+                 )
 
   type Id = NonEmptyString
   object Id extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
@@ -36,7 +49,32 @@ object Note:
   type Author = NonEmptyString
   object Author extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
 
-  case class NoteDto(title: String, content: String, author: String)
+  enum Visibility derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
+    case Public
+    case Private
+
+  object Visibility:
+    val init: Either[NonEmptyChain[String], Visibility] = Right(Private)
+    def fromString(input: String): Visibility = input match
+      case "Public" => Public
+      case _ => Private
+
+  type WordCount = PosInt
+  object WordCount extends RefinedTypeOps[WordCount, Int] with CatsRefinedTypeOpsSyntax
+
+  type ReadingTime = PosDouble
+  object ReadingTime extends RefinedTypeOps[ReadingTime, Double] with CatsRefinedTypeOpsSyntax
+
+  type Likes = NonNegInt
+  object Likes extends RefinedTypeOps[Likes, Int] with CatsRefinedTypeOpsSyntax
+
+  opaque type BlogDate = LocalDate
+  object BlogDate:
+    def apply(date: LocalDate): BlogDate = date
+    val create: Either[NonEmptyChain[String], BlogDate] =
+      Right(LocalDate.now())
+
+  case class NoteDto(title: String, content: String, author: String, visibility: String)
 
   object NoteDto:
     implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
@@ -45,5 +83,11 @@ object Note:
       (Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
-        Author.from(dto.author).toEitherNec
-        ).mapN(Note.apply)
+        Author.from(dto.author).toEitherNec,
+        WordCount.from(dto.content.length).toEitherNec,
+        ReadingTime.from(dto.content.length / 200.0).toEitherNec,
+        Likes.from(0).toEitherNec,
+        Visibility.init,
+        BlogDate.create,
+        BlogDate.create
+        ).parMapN(Note.apply)
