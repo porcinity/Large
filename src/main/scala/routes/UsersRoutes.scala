@@ -26,7 +26,7 @@ import monocle.syntax.all.*
 import monocle.refined.all.*
 import UpdateUser.GenericDerivation.*
 import common.*
-class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
+class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId.unsafeFrom(str))
