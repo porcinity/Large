@@ -55,7 +55,10 @@ object Note:
 
   object Visibility:
     val init: Either[NonEmptyChain[String], Visibility] = Right(Private)
-    def fromString(input: String): Visibility = input match
+    def fromString(input: String): Either[NonEmptyChain[String], Visibility] = input match
+      case "Public" => Right(Public)
+      case _ => Right(Private)
+    def unsafeFromString(input: String): Visibility = input match
       case "Public" => Public
       case _ => Private
 
@@ -88,7 +91,7 @@ object Note:
         WordCount.from(dto.content.length).toEitherNec,
         ReadingTime.from(dto.content.length / 200.0).toEitherNec,
         Likes.from(0).toEitherNec,
-        Visibility.init,
+        Visibility.fromString(dto.visibility),
         BlogDate.create,
         BlogDate.create
         ).parMapN(Note.apply)

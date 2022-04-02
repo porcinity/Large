@@ -83,7 +83,7 @@ private object NotesSql:
           WordCount.unsafeFrom(content.length),
           ReadingTime.unsafeFrom(content.length / 200.0),
           Likes.unsafeFrom(likes.toInt),
-          Visibility.fromString(vis),
+          Visibility.unsafeFromString(vis),
           BlogDate(publish),
           BlogDate(edit)
         )
