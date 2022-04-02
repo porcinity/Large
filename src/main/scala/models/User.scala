@@ -10,6 +10,7 @@ import java.time.LocalDate
 import com.aventrix.jnanoid.jnanoid.*
 import eu.timepit.refined.boolean.And
 import eu.timepit.refined.string.MatchesRegex
+import eu.timepit.refined.types.numeric.*
 
 //import models.ValidationExtractors.*
 
@@ -32,7 +33,7 @@ object User:
     implicit val dtoCodec: Codec[UserDto] = deriveCodec
     implicit val userCodec: Codec[User] = deriveCodec
 
-  case class UserDto(name: String, email: String)
+  case class UserDto(name: String, bio: String, email: String)
   case class User(
                    id: UserId,
                    name: Username,
@@ -50,13 +51,16 @@ object User:
     case Trial
     case Premium
 
-  type Liked = PosInt
+  object MembershipTier:
+    def init: Either[NonEmptyChain[String], MembershipTier] = Right(Free)
+
+  type Liked = NonNegInt
   object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax
 
-  type Followers = PosInt
-  object Followers extends RefinedTypeOps[Followers, Int] with CatsRefinedTypeOpsSyntax
+  type Followers = NonNegInt
+  object Followers extends RefinedTypeOps[PosInt, Int] with CatsRefinedTypeOpsSyntax
 
-  type Following = PosInt
+  type Following = NonNegInt
   object Following extends RefinedTypeOps[Following, Int] with CatsRefinedTypeOpsSyntax
 
   type Biography = NonEmptyString
@@ -111,7 +115,12 @@ object User:
       (
         UserId.from(id).toEitherNec,
         Username.validate(dto.name),
+        Biography.from(dto.bio).toEitherNec,
         email,
+        MembershipTier.init,
+        Followers.from(0).toEitherNec,
+        Following.from(0).toEitherNec,
+        Liked.from(0).toEitherNec,
         JoinDate.create(LocalDate.now())
         ).parMapN(User.apply)
 
