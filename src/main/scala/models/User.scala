@@ -52,13 +52,17 @@ object User:
     case Premium
 
   object MembershipTier:
-    def init: Either[NonEmptyChain[String], MembershipTier] = Right(Free)
+    val init: Either[NonEmptyChain[String], MembershipTier] = Right(Free)
+    def fromString(input: String): MembershipTier = input match
+      case "Trial" => Trial
+      case "Premium" => Premium
+      case _ => Free
 
   type Liked = NonNegInt
   object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax
 
   type Followers = NonNegInt
-  object Followers extends RefinedTypeOps[PosInt, Int] with CatsRefinedTypeOpsSyntax
+  object Followers extends RefinedTypeOps[Followers, Int] with CatsRefinedTypeOpsSyntax
 
   type Following = NonNegInt
   object Following extends RefinedTypeOps[Following, Int] with CatsRefinedTypeOpsSyntax
