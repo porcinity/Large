@@ -2,6 +2,7 @@ package routes
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
+import common.GetItem
 import models.Note.*
 import models.Tag.{TagDto, TagName}
 import org.http4s.*
@@ -30,7 +31,7 @@ import monocle.syntax.all.*
 class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
-    QueryParamDecoder[String].map(TagName.apply)
+    QueryParamDecoder[String].map(TagName.unsafeFrom)
 
   object NoteIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
@@ -51,7 +52,7 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
     case GET -> Root / NoteIdVar(id) =>
       for {
         note <- repository.findNoteById(id)
-        res <- note.fold(NotFound())(Ok(_))
+        res <- note.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
     case req @ POST -> Root =>
@@ -65,10 +66,9 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
       for {
         dto <- req.asJsonDecode[TagDto]
         tag <- TagDto.toDomain(dto, id).pure[F]
-        res <- Created(repository.addTag(tag))
+        res <- tag.fold(UnprocessableEntity(_), t => Ok(repository.addTag(t)))
       } yield res
-
-
+      
     case req @ PUT -> Root / NoteIdVar(id) =>
       for {
         dto <- req.decodeJson[NoteDto]
