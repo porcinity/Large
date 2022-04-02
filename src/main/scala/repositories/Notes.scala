@@ -53,15 +53,15 @@ object Notes:
       })
 
       override def create(note: Note): F[Note] = postgres.use(_.use { session =>
-        session.prepare(insertBlog).use(_.execute(note)).as(note)
+        session.prepare(insertNote).use(_.execute(note)).as(note)
       })
 
       override def update(note: Note): F[Note] = postgres.use(_.use { session =>
-        session.prepare(updateBlog).use(_.execute(note)).as(note)
+        session.prepare(updateNote).use(_.execute(note)).as(note)
       })
 
       override def delete(noteId: Id): F[Option[Note]] = postgres.use(_.use { session =>
-        session.prepare(deleteBlog).use(ps => ps.option(noteId))
+        session.prepare(deleteNote).use(ps => ps.option(noteId))
       })
 
       override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
@@ -97,13 +97,13 @@ private object NotesSql:
   val selectById: Query[Id, Note] =
     sql"select * from notes where note_id = $noteId".query(decoder)
 
-  val insertBlog: Command[Note] =
+  val insertNote: Command[Note] =
     sql"""
         insert into notes
         values ($encoder)
     """.command
 
-  val updateBlog: Command[Note] =
+  val updateNote: Command[Note] =
     sql"""
         update notes
         set note_title = $varchar,
@@ -113,7 +113,7 @@ private object NotesSql:
       title.value ~ content.value ~ id
     }
 
-  val deleteBlog: Query[Id, Note] =
+  val deleteNote: Query[Id, Note] =
     sql"""
         delete from notes where note_id = $noteId returning *
     """.query(decoder)

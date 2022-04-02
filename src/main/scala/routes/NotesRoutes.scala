@@ -2,6 +2,7 @@ package routes
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
+import cats.Monad
 import common.GetItem
 import models.Note.*
 import models.Tag.{TagDto, TagName}
@@ -28,15 +29,14 @@ import monocle.macros.syntax.AppliedFocusSyntax
 import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
+class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
 
   object NoteIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
-
-
+  
   object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
   object OptionalUserIdParamMatch extends OptionalQueryParamDecoderMatcher[String]("user")
 
@@ -57,7 +57,7 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
 
     case req @ POST -> Root =>
       for
-        dto <- req.decodeJson[NoteDto]
+        dto <- req.asJsonDecode[NoteDto]
         note <- NoteDto.toDomain(dto).pure[F]
         res <- note.fold(UnprocessableEntity(_), b => Created(repository.create(b)))
       yield res
@@ -68,10 +68,10 @@ class NotesRoutes[F[_]: Concurrent](repository: Notes[F]) extends Http4sDsl[F] {
         tag <- TagDto.toDomain(dto, id).pure[F]
         res <- tag.fold(UnprocessableEntity(_), t => Ok(repository.addTag(t)))
       } yield res
-      
+
     case req @ PUT -> Root / NoteIdVar(id) =>
       for {
-        dto <- req.decodeJson[NoteDto]
+        dto <- req.asJsonDecode[NoteDto]
         foundNote <- repository.findNoteById(id)
         updateNote = NoteDto.toDomain(dto)
         res <- (foundNote, updateNote) match
