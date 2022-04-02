@@ -44,27 +44,7 @@ object Users:
 
 private object UsersSql:
   import repositories.Codecs.*
-//  val decoder: Decoder[User] =
-//    ( varchar ~ varchar ~ varchar ~ varchar ~ date ).map {
-//      case idd ~ name ~ email ~ status ~ join =>
-//        User(
-//          idd,
-//          name,
-//          Email(
-//            email,
-//            EmailStatus.fromString(status)
-//          ),
-//          join
-//        )
-//    }
-
-  val encoder: Encoder[User] =
-    (
-      varchar ~ varchar ~ varchar ~ varchar ~ date
-    ).contramap { u =>
-      u.id.value ~ u.name.value ~ u.email.address.value
-        ~ EmailStatus.makeString(u.email.status) ~ u.joinDate.value }
-
+  
   val codec: Codec[User] =
     (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
       case i ~ n ~ a ~ s ~ d => User(
