@@ -7,6 +7,7 @@ import Codecs.*
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.text.*
+import skunk.codec.numeric.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
 
@@ -44,21 +45,27 @@ object Users:
 
 private object UsersSql:
   import repositories.Codecs.*
-  
+
   val codec: Codec[User] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ date).imap {
-      case i ~ n ~ a ~ s ~ d => User(
+    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int4 ~ int4 ~ int4 ~ date).imap {
+      case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d => User(
         UserId.unsafeFrom(i),
         Username.unsafeFrom(n),
+        Biography.unsafeFrom(b),
         Email(
           EmailAddress.unsafeFrom(a),
           EmailStatus.fromString(s)
         ),
+        MembershipTier.fromString(t),
+        Followers.unsafeFrom(followers),
+        Following.unsafeFrom(following),
+        Liked.unsafeFrom(l),
         JoinDate(d)
       )
     } (u =>
-      u.id.value ~ u.name.value ~ u.email.address.value ~
-        EmailStatus.makeString(u.email.status) ~ u.joinDate.value)
+      u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
+        EmailStatus.makeString(u.email.status) ~ u.tier.toString ~ u.followers.value ~ u.following.value ~
+        u.likedArticles.value ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
     sql"select * from users".query(codec)
@@ -79,7 +86,7 @@ private object UsersSql:
             user_email_address = $varchar,
             user_email_status = $varchar
         where user_id = $varchar
-    """.command.contramap { case User(id, name, email, _) =>
+    """.command.contramap { case User(id, name, _, email, _, _, _, _, _) =>
       name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
 
   val deleteUser: Query[UserId, User] =
