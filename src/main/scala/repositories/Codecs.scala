@@ -18,4 +18,4 @@ object Codecs:
     varchar.imap[Note.Id](Note.Id.unsafeFrom)(_.value)
 
   val tagName: Codec[TagName] =
-    varchar.imap[TagName](TagName(_))(_.value)
+    varchar.imap[TagName](TagName.unsafeFrom)(_.value)
