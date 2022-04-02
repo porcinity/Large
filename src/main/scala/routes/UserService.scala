@@ -36,27 +36,20 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
     case GET -> Root =>
       for {
         users <- repository.findAllUsers
-        r = GetItems[User](users)
-        res <- Ok(r)
+        res <- Ok(GetItems(users))
       } yield res
 
     case GET -> Root / UserIdVar(id) =>
       for {
         u <- repository.findUserById(id)
-        res <- u.fold(NotFound())(u => {
-          val item = GetItem[User](u)
-          Ok(item)
-        })
+        res <- u.fold(NotFound())(u => Ok(GetItem(u)))
       } yield res
 
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[UserDto]
         u <- UserDto.toDomain(dto).pure[F]
-        res <- u.fold(UnprocessableEntity(_), x => {
-          val user = repository.create(x).map(GetItem[User])
-          Ok(user)
-        })
+        res <- u.fold(UnprocessableEntity(_), x => Ok(repository.create(x).map(GetItem.apply)))
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
@@ -80,14 +73,14 @@ class UserService[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
           val up = UpdateUser.of(dto, u)
-          up.fold(UnprocessableEntity(_), u => Created(repository.update(u)))
+          up.fold(UnprocessableEntity(_), u => Created(repository.update(u).map(GetItem.apply)))
         })
       } yield res
 
     case DELETE -> Root / UserIdVar(id) =>
       for {
-        res <- repository.delete(id)
-        y <- res.fold(NotFound())( _ => NoContent())
-      } yield y
+        d <- repository.delete(id)
+        res <- d.fold(NotFound())(_ => NoContent())
+      } yield res
   }
 }
