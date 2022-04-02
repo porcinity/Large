@@ -9,15 +9,20 @@ import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
 import cats.data.*
 import cats.implicits.*
+import common.{GetItem, GetItems}
 import eu.timepit.refined.api.RefinedTypeOps
 import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 
 
+
 object Note:
-  case class Note(id: Id, title: Title, content: Content, author: Author)
   implicit val noteCodec: Codec[Note] = deriveCodec[Note]
+  implicit val GetItemCodec: Codec[GetItem[Note]] = deriveCodec
+  implicit val GetItemsCodec: Codec[GetItems[Note]] = deriveCodec
+  
+  case class Note(id: Id, title: Title, content: Content, author: Author)
 
   type Id = NonEmptyString
   object Id extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
