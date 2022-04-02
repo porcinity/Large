@@ -46,7 +46,7 @@ object User:
                    joinDate: JoinDate
                  )
 
-  enum MembershipTier:
+  enum MembershipTier derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Free
     case Trial
     case Premium

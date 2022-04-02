@@ -47,7 +47,7 @@ private object UsersSql:
   import repositories.Codecs.*
 
   val codec: Codec[User] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int4 ~ int4 ~ int4 ~ date).imap {
+    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date).imap {
       case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d => User(
         UserId.unsafeFrom(i),
         Username.unsafeFrom(n),
@@ -57,21 +57,51 @@ private object UsersSql:
           EmailStatus.fromString(s)
         ),
         MembershipTier.fromString(t),
-        Followers.unsafeFrom(followers),
-        Following.unsafeFrom(following),
-        Liked.unsafeFrom(l),
+        Followers.unsafeFrom(followers.toInt),
+        Following.unsafeFrom(following.toInt),
+        Liked.unsafeFrom(l.toInt),
         JoinDate(d)
       )
     } (u =>
       u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
-        EmailStatus.makeString(u.email.status) ~ u.tier.toString ~ u.followers.value ~ u.following.value ~
-        u.likedArticles.value ~ u.joinDate.value)
+        EmailStatus.makeString(u.email.status) ~ u.tier.toString ~ u.followers.value.toLong ~ u.following.value.toLong ~
+        u.likedArticles.value.toLong ~ u.joinDate.value)
 
   val selectAll: Query[Void, User] =
-    sql"select * from users".query(codec)
+   sql"""
+    select u.*,
+       (select count(*) from follows_map f where f.user_id = u.user_id) as followers,
+       (select count(*) from follows_map f where f.follower_id = u.user_id) as following,
+       (select count(*) from likes_map l where l.like_user = u.user_id) as likes
+    from users u
+    """.query(codec)
 
   val selectById: Query[UserId, User] =
-    sql"select * from users where user_id = $userId".query(codec)
+    sql"""
+        select u.user_id, u.username, u.user_bio, u.user_email_address, u.user_email_status, u.user_tier,
+                (select count(*) from follows_map f where f.user_id = u.user_id),
+                (select count(*) from follows_map f where f.follower_id = u.user_id),
+                (select count(*) from likes_map l where l.like_user = u.user_id),
+                u.user_join_date
+         from users u
+         where u.user_id = $userId
+         """
+      .query(varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date)
+      .map { case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d => User(
+        UserId.unsafeFrom(i),
+        Username.unsafeFrom(n),
+        Biography.unsafeFrom(b),
+        Email(
+          EmailAddress.unsafeFrom(a),
+          EmailStatus.fromString(s)
+        ),
+        MembershipTier.fromString(t),
+        Followers.unsafeFrom(followers.toInt),
+        Following.unsafeFrom(following.toInt),
+        Liked.unsafeFrom(l.toInt),
+        JoinDate(d)
+      )
+    }
 
   val insertUser: Command[User] =
     sql"""
