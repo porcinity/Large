@@ -20,7 +20,7 @@ import cats.data.Validated.Valid
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
 import mail.{JavaMailUtil, test}
-import models.Blog.BlogDto
+import models.Article.ArticleDto
 import io.circe.syntax.*
 import monocle.syntax.all.*
 import monocle.refined.all.*
@@ -64,7 +64,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
 
     case req @ POST -> Root / UserIdVar(id) / "addNote" =>
       for {
-        dto <- req.asJsonDecode[BlogDto]
+        dto <- req.asJsonDecode[ArticleDto]
 
       } yield ???
 

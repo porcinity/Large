@@ -19,22 +19,22 @@ import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 
 
-object Blog:
-  implicit val noteCodec: Codec[Blog] = deriveCodec[Blog]
-  implicit val GetItemCodec: Codec[GetItem[Blog]] = deriveCodec
-  implicit val GetItemsCodec: Codec[GetItems[Blog]] = deriveCodec
+object Article:
+  implicit val articleCodec: Codec[Article] = deriveCodec
+  implicit val GetItemCodec: Codec[GetItem[Article]] = deriveCodec
+  implicit val GetItemsCodec: Codec[GetItems[Article]] = deriveCodec
 
-  case class Blog(
-                   id: Id,
-                   title: Title,
-                   content: Content,
-                   author: Author,
-                   word_count: WordCount,
-                   reading_time: ReadingTime,
-                   likes: Likes,
-                   visibility: Visibility,
-                   published_on: BlogDate,
-                   last_updated: BlogDate,
+  case class Article(
+                      id: Id,
+                      title: Title,
+                      content: Content,
+                      author: Author,
+                      word_count: WordCount,
+                      reading_time: ReadingTime,
+                      likes: Likes,
+                      visibility: Visibility,
+                      published_on: ArticleDate,
+                      last_updated: ArticleDate,
                  )
 
   type Id = NonEmptyString
@@ -71,18 +71,18 @@ object Blog:
   type Likes = NonNegInt
   object Likes extends RefinedTypeOps[Likes, Int] with CatsRefinedTypeOpsSyntax
 
-  opaque type BlogDate = LocalDate
-  object BlogDate:
-    def apply(date: LocalDate): BlogDate = date
-    val create: Either[NonEmptyChain[String], BlogDate] =
+  opaque type ArticleDate = LocalDate
+  object ArticleDate:
+    def apply(date: LocalDate): ArticleDate = date
+    val create: Either[NonEmptyChain[String], ArticleDate] =
       Right(LocalDate.now())
-    extension (x: BlogDate) def value: LocalDate = x
+    extension (x: ArticleDate) def value: LocalDate = x
 
-  case class BlogDto(title: String, content: String, author: String, visibility: String)
+  case class ArticleDto(title: String, content: String, author: String, visibility: String)
 
-  object BlogDto:
-    implicit val noteDtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
-    def toDomain(dto: BlogDto): Either[NonEmptyChain[String], Blog] =
+  object ArticleDto:
+    implicit val articleDtoCodec: Codec[ArticleDto] = deriveCodec
+    def toDomain(dto: ArticleDto): Either[NonEmptyChain[String], Article] =
       val id = NanoIdUtils.randomNanoId()
       (
         Id.from(id).toEitherNec,
@@ -93,6 +93,6 @@ object Blog:
         ReadingTime.from(dto.content.split(" ").length / 200.0).toEitherNec,
         Likes.from(0).toEitherNec,
         Visibility.fromString(dto.visibility),
-        BlogDate.create,
-        BlogDate.create
-        ).parMapN(Blog.apply)
+        ArticleDate.create,
+        ArticleDate.create
+        ).parMapN(Article.apply)

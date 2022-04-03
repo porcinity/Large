@@ -1,7 +1,7 @@
 package models
 
 import cats.data.NonEmptyChain
-import models.Blog.Id
+import models.Article.Id
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 import com.aventrix.jnanoid.jnanoid.*
@@ -33,7 +33,7 @@ object Tag {
   object TagDto:
     implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
 
-    def toDomain(dto: TagDto, id: Blog.Id): Either[NonEmptyChain[String], Tag] =
+    def toDomain(dto: TagDto, id: Article.Id): Either[NonEmptyChain[String], Tag] =
       val tagId = NanoIdUtils.randomNanoId()
       (
         TagId.from(tagId).toEitherNec,

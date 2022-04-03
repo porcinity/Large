@@ -4,7 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import cats.Monad
 import common.*
-import models.Blog.*
+import models.Article.*
 import models.Tag.{TagDto, TagName}
 import org.http4s.*
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
@@ -57,8 +57,8 @@ class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4s
 
     case req @ POST -> Root =>
       for
-        dto <- req.asJsonDecode[BlogDto]
-        blog <- BlogDto.toDomain(dto).pure[F]
+        dto <- req.asJsonDecode[ArticleDto]
+        blog <- ArticleDto.toDomain(dto).pure[F]
         res <- blog.fold(UnprocessableEntity(_), b =>
           Created(repository.create(b).map(GetItem.apply)))
       yield res
@@ -72,9 +72,9 @@ class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4s
 
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
-        dto <- req.asJsonDecode[BlogDto]
+        dto <- req.asJsonDecode[ArticleDto]
         foundBlog <- repository.findBlogById(id)
-        updateBlog = BlogDto.toDomain(dto)
+        updateBlog = ArticleDto.toDomain(dto)
         res <- (foundBlog, updateBlog) match
           case (None, _) => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
