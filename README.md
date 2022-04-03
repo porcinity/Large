@@ -113,8 +113,11 @@ Response:
         "likes": 5,
         "visibility": "Public",
         "published_on": "2022-04-02",
-        "last_updated": "2022-04-02"
+        "last_updated": "2022-04-02",
+        "tags": [
+          "Scala",
+          "Functional Programming"
+        ]
     }
 }
 ```
-### Tags

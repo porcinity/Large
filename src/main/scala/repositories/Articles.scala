@@ -74,8 +74,8 @@ object Articles:
 
 private object ArticlesSql:
   val decoder: Decoder[Article] =
-    ( articleId ~ varchar ~ varchar ~ articleAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
-      case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit =>
+    ( articleId ~ varchar ~ varchar ~ articleAuthorId ~ int8 ~ varchar ~ date ~ date ~ _varchar ).map {
+      case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit ~ tags =>
         Article(
           nId,
           Title.unsafeFrom(title),
@@ -86,13 +86,14 @@ private object ArticlesSql:
           Likes.unsafeFrom(likes.toInt),
           Visibility.unsafeFromString(vis),
           ArticleDate(publish),
-          ArticleDate(edit)
+          ArticleDate(edit),
+          tags.toList
         )
     }
 
   val encoder: Encoder[Article] =
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date)
-      .contramap { case Article(id, title, content, author, _, _, _, visibility, publish, edit) =>
+      .contramap { case Article(id, title, content, author, _, _, _, visibility, publish, edit, _) =>
       id.value ~ title.value ~ content.value ~ author.value ~ makeString(visibility) ~ publish.value ~ edit.value }
 
   val tagEncoder: Encoder[Tag] =
@@ -107,8 +108,11 @@ private object ArticlesSql:
                 (select count(*) from likes_map l where l.like_article = a.article_id) as likes,
                 a.article_visibility,
                 a.article_publish_date,
-                a.article_last_edit_date
-         from articles a;
+                a.article_last_edit_date,
+                array_remove(array_agg(tm.tag_id), NULL) as tags
+         from articles a
+         left join tag_map tm on a.article_id = tm.article_id
+        group by a.article_id;
     """.query(decoder)
 
   val selectById: Query[Id, Article] =
@@ -120,9 +124,12 @@ private object ArticlesSql:
                 (select count(*) from likes_map l where l.like_article = a.article_id) as likes,
                 a.article_visibility,
                 a.article_publish_date,
-                a.article_last_edit_date
+                a.article_last_edit_date,
+                array_remove(array_agg(tm.tag_id), NULL) as tags
          from articles a
-        where a.article_id = $articleId;
+         left join tag_map tm on a.article_id = tm.article_id
+        where a.article_id = $articleId
+        group by a.article_id, a.article_title, a.article_content, a.article_author, a.article_visibility, a.article_publish_date, a.article_last_edit_date;
     """.query(decoder)
 
   val insertNote: Command[Article] =
@@ -139,7 +146,7 @@ private object ArticlesSql:
             article_visibility = $varchar,
             article_last_edit_date = $date
         where article_id = $articleId
-    """.command.contramap { case Article(id, title, content, _, _, _, _, vis, _, _) =>
+    """.command.contramap { case Article(id, title, content, _, _, _, _, vis, _, _, _) =>
       title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
     }
 

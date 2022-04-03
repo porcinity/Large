@@ -35,7 +35,13 @@ object Article:
                       visibility: Visibility,
                       published_on: ArticleDate,
                       last_updated: ArticleDate,
+                      tags: Tags
                  )
+
+  type Tags = List[String]
+  object Tags:
+    def from(list: List[String]): Either[NonEmptyChain[String], Tags] =
+      Right(list)
 
   type Id = NonEmptyString
   object Id extends RefinedTypeOps[NonEmptyString, String] with CatsRefinedTypeOpsSyntax
@@ -97,5 +103,6 @@ object Article:
         Likes.from(0).toEitherNec,
         Visibility.fromString(dto.visibility),
         ArticleDate.create,
-        ArticleDate.create
+        ArticleDate.create,
+        Tags.from(List())
         ).parMapN(Article.apply)
