@@ -89,7 +89,7 @@ private object UsersSql:
                 (select count(*) from follows_map f where f.follower_id = u.user_id),
                 (select count(*) from likes_map l where l.like_user = u.user_id),
                 u.user_join_date,
-                array_remove(array_agg(a.article_author), NULL) as blog_posts
+                array_remove(array_agg(a.article_id), NULL) as blog_posts
          from users u
          join articles a on u.user_id = a.article_author
          where u.user_id = $userId

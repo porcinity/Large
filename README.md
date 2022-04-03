@@ -15,7 +15,7 @@ Featuring:
 
 
 ### Users
-`GET api/users`
+`GET api/users/$id`
 
 Sample Response:
 ```json
@@ -29,10 +29,17 @@ Sample Response:
             "status": "Unverified"
         },
         "tier": "Premium",
-        "followers": 0,
-        "following": 0,
-        "likedArticles": 0,
-        "joinDate": "2022-04-01"
+        "followers": 21,
+        "following": 15,
+        "likedArticles": 18,
+        "joinDate": "2022-04-01",
+        "articles": [
+          "YqNIt7BqQxlDbMuX2eux1",
+          "sOGLMtenDiC7kQM-38hcK",
+          "vdoxZhETeR6Ptxxv41P_K",
+          "pW4kbqbV0BuKRlfWelQbm",
+          "rdoFT8pdnutq1ylMtAA6r"
+        ]
     }
 }
 ```
@@ -60,11 +67,12 @@ Response:
                 "address": "scala.luvr@email.com",
                 "status": "Unverified"
             },
-            "tier": "Premium",
-            "followers": 18,
-            "following": 23,
-            "likedArticles": 40,
-            "joinDate": "2022-04-01"
+            "tier": "Trial",
+            "followers": 0,
+            "following": 0,
+            "likedArticles": 0,
+            "joinDate": "2022-04-01",
+            "articles": []
         }
 }
 ```
