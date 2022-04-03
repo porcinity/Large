@@ -73,7 +73,7 @@ object Notes:
 
 private object NotesSql:
   val decoder: Decoder[Blog] =
-    ( noteId ~ varchar ~ varchar ~ noteAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
+    ( blogId ~ varchar ~ varchar ~ noteAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
       case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit =>
         Blog(
           nId,
@@ -99,52 +99,52 @@ private object NotesSql:
 
   val selectAll: Query[Void, Blog] =
     sql"""
-         select b.note_id,
-                b.note_title,
-                b.note_content,
-                b.note_author,
-                (select count(*) from likes_map l where l.like_blog = b.note_id) as likes,
-                b.note_visibility,
-                b.note_publish_date,
-                b.note_last_edit_date
-         from notes b;
+         select b.blog_id,
+                b.blog_title,
+                b.blog_content,
+                b.blog_author,
+                (select count(*) from likes_map l where l.like_blog = b.blog_id) as likes,
+                b.blog_visibility,
+                b.blog_publish_date,
+                b.blog_last_edit_date
+         from blogs b;
     """.query(decoder)
 
   val selectById: Query[Id, Blog] =
     sql"""
-         select b.note_id,
-                b.note_title,
-                b.note_content,
-                b.note_author,
-                (select count(*) from likes_map l where l.like_blog = b.note_id) as likes,
-                b.note_visibility,
-                b.note_publish_date,
-                b.note_last_edit_date
-         from notes b
-        where b.note_id = $noteId;
+         select b.blog_id,
+                b.blog_title,
+                b.blog_content,
+                b.blog_author,
+                (select count(*) from likes_map l where l.like_blog = b.blog_id) as likes,
+                b.blog_visibility,
+                b.blog_publish_date,
+                b.blog_last_edit_date
+         from blogs b
+        where b.blog_id = $blogId;
     """.query(decoder)
 
   val insertNote: Command[Blog] =
     sql"""
-        insert into notes
+        insert into blogs
         values ($encoder)
     """.command
 
   val updateNote: Command[Blog] =
     sql"""
-        update notes
-        set note_title = $varchar,
-            note_content = $varchar,
-            note_visibility = $varchar,
-            note_last_edit_date = $date
-        where note_id = $noteId
+        update blogs
+        set blog_title = $varchar,
+            blog_content = $varchar,
+            blog_visibility = $varchar,
+            blog_last_edit_date = $date
+        where blog_id = $blogId
     """.command.contramap { case Blog(id, title, content, _, _, _, _, vis, _, _) =>
       title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
     }
 
   val deleteNote: Query[Id, Blog] =
     sql"""
-        delete from notes where note_id = $noteId returning *
+        delete from blogs where blog_id = $blogId returning *
     """.query(decoder)
 
   val insertTag: Command[Tag] =
@@ -155,23 +155,23 @@ private object NotesSql:
     
   val selectByUser: Query[String, Blog] =
     sql"""
-        select * from notes
-        where note_author = $varchar
+        select * from blogs
+        where blog_author = $varchar
     """.query(decoder)
 
   val selectByTag: Query[TagName, Blog] =
     sql"""
         select n.*
-        from notes n, tag_map t
-        where t.note_id = n.note_id
+        from blogs n, tag_map t
+        where t.blog_id = n.blog_id
         and t.tag_id = $tagName
     """.query(decoder)
 
   val selectByTagAndUser: Query[TagName ~ String, Blog] =
     sql"""
         select n.*
-        from notes n, tag_map t
-        where t.note_id = n.note_id
+        from blogs n, tag_map t
+        where t.blog_id = n.blog_id
         and t.tag_id = $tagName
-        and n.note_author = $varchar
+        and n.blog_author = $varchar
     """.query(decoder)
