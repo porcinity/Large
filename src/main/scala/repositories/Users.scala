@@ -76,9 +76,9 @@ private object UsersSql:
        (select count(*) from follows_map f where f.follower_id = u.user_id) as following,
        (select count(*) from likes_map l where l.like_user = u.user_id) as likes,
        u.user_join_date,
-       array_remove(array_agg(b.blog_id), NULL) as blog_posts
+       array_remove(array_agg(a.article_id), NULL) as blog_posts
     from users u
-    left join blogs b on u.user_id = b.blog_author
+    left join articles a on u.user_id = a.article_author
     group by u.user_id
     """.query(codec)
 
@@ -89,9 +89,9 @@ private object UsersSql:
                 (select count(*) from follows_map f where f.follower_id = u.user_id),
                 (select count(*) from likes_map l where l.like_user = u.user_id),
                 u.user_join_date,
-                array_remove(array_agg(b.blog_id), NULL) as blog_posts
+                array_remove(array_agg(a.article_author), NULL) as blog_posts
          from users u
-         join blogs b on u.user_id = b.blog_author
+         join articles a on u.user_id = a.article_author
          where u.user_id = $userId
          group by u.user_id
          """

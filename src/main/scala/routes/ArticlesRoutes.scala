@@ -29,12 +29,12 @@ import monocle.macros.syntax.AppliedFocusSyntax
 import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Http4sDsl[F] {
+class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
 
-  object BlogIdVar:
+  object ArticleIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
 
   object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
@@ -49,41 +49,41 @@ class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Htt
       case (None, None) => Ok(repository.findAllArticles.map(GetItems.apply))
     }
 
-    case GET -> Root / BlogIdVar(id) =>
+    case GET -> Root / ArticleIdVar(id) =>
       for {
-        blog <- repository.findArticleById(id)
-        res <- blog.fold(NotFound())(n => Ok(GetItem(n)))
+        article <- repository.findArticleById(id)
+        res <- article.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
     case req @ POST -> Root =>
       for
         dto <- req.asJsonDecode[ArticleDto]
-        blog <- ArticleDto.toDomain(dto).pure[F]
-        res <- blog.fold(UnprocessableEntity(_), b =>
+        article <- ArticleDto.toDomain(dto).pure[F]
+        res <- article.fold(UnprocessableEntity(_), b =>
           Created(repository.create(b).map(GetItem.apply)))
       yield res
 
-    case req @ POST -> Root / BlogIdVar(id) / "addTag" =>
+    case req @ POST -> Root / ArticleIdVar(id) / "addTag" =>
       for {
         dto <- req.asJsonDecode[TagDto]
         tag <- TagDto.toDomain(dto, id).pure[F]
         res <- tag.fold(UnprocessableEntity(_), t => Ok(repository.addTag(t)))
       } yield res
 
-    case req @ PUT -> Root / BlogIdVar(id) =>
+    case req @ PUT -> Root / ArticleIdVar(id) =>
       for {
         dto <- req.asJsonDecode[ArticleDto]
-        foundBlog <- repository.findArticleById(id)
-        updateBlog = ArticleDto.toDomain(dto)
-        res <- (foundBlog, updateBlog) match
+        foundArticle <- repository.findArticleById(id)
+        updateArticle = ArticleDto.toDomain(dto)
+        res <- (foundArticle, updateArticle) match
           case (None, _) => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
           case (Some(b), Right(u)) =>
-            val newBlog = b.copy(title = u.title, content = u.content, visibility = u.visibility)
-            Created(repository.update(newBlog).map(GetItem.apply))
+            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+            Created(repository.update(newArticle).map(GetItem.apply))
       } yield res
 
-    case DELETE -> Root / BlogIdVar(id) =>
+    case DELETE -> Root / ArticleIdVar(id) =>
       for {
         res <- repository.delete(id)
         y <- res.fold(NotFound())( _ => NoContent())
