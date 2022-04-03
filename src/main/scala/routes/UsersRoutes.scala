@@ -49,7 +49,8 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
       for {
         dto <- req.asJsonDecode[UserDto]
         u <- UserDto.toDomain(dto).pure[F]
-        res <- u.fold(UnprocessableEntity(_), x => Ok(repository.create(x).map(GetItem.apply)))
+        res <- u.fold(e => UnprocessableEntity(GetItems(e.toList)),
+                  x => Ok(repository.create(x).map(GetItem.apply)))
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>

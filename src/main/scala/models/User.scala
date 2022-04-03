@@ -28,6 +28,7 @@ import common.{GetItem, GetItems}
 object User:
 
   object Codecs:
+    implicit val stringCodec: Codec[GetItems[String]] = deriveCodec
     implicit val GetItemCodec: Codec[GetItem[User]] = deriveCodec
     implicit val GetItemsCodec: Codec[GetItems[User]] = deriveCodec
     implicit val dtoCodec: Codec[UserDto] = deriveCodec
@@ -49,10 +50,10 @@ object User:
   type UserId = NonEmptyFiniteString[30]
   object UserId extends RefinedTypeOps[UserId, String] with CatsRefinedTypeOpsSyntax
 
-  type Username = NonEmptyFiniteString[30]
+  type Username = NonEmptyFiniteString[15]
   object Username extends RefinedTypeOps[Username, String] with CatsRefinedTypeOpsSyntax:
     def validate(input: String): Either[NonEmptyChain[String], Username] =
-      Username.from(input).leftMap(_ => "Username must be less than or equal to 30 chars.").toEitherNec
+      Username.from(input).leftMap(_ => "Username must be less than or equal to 15 chars.").toEitherNec
 
   type ValidEmail = Refined[String, MatchesRegex["""^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""]]
 
@@ -118,7 +119,7 @@ object User:
       (
         UserId.from(id).toEitherNec,
         Username.validate(dto.name),
-        Biography.from(dto.bio).toEitherNec,
+        Biography.from(dto.bio).leftMap(_ => "Bio cannot be empty.").toEitherNec,
         email,
         MembershipTier.init,
         Followers.from(0).toEitherNec,
