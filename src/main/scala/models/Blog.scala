@@ -20,11 +20,11 @@ import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 
 object Blog:
-  implicit val noteCodec: Codec[Note] = deriveCodec[Note]
-  implicit val GetItemCodec: Codec[GetItem[Note]] = deriveCodec
-  implicit val GetItemsCodec: Codec[GetItems[Note]] = deriveCodec
+  implicit val noteCodec: Codec[Blog] = deriveCodec[Blog]
+  implicit val GetItemCodec: Codec[GetItem[Blog]] = deriveCodec
+  implicit val GetItemsCodec: Codec[GetItems[Blog]] = deriveCodec
 
-  case class Note(
+  case class Blog(
                    id: Id,
                    title: Title,
                    content: Content,
@@ -78,21 +78,21 @@ object Blog:
       Right(LocalDate.now())
     extension (x: BlogDate) def value: LocalDate = x
 
-  case class NoteDto(title: String, content: String, author: String, visibility: String)
+  case class BlogDto(title: String, content: String, author: String, visibility: String)
 
-  object NoteDto:
-    implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
-    def toDomain(dto: NoteDto): Either[NonEmptyChain[String], Note] =
+  object BlogDto:
+    implicit val noteDtoCodec: Codec[BlogDto] = deriveCodec[BlogDto]
+    def toDomain(dto: BlogDto): Either[NonEmptyChain[String], Blog] =
       val id = NanoIdUtils.randomNanoId()
       (
         Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
         Author.from(dto.author).toEitherNec,
-        WordCount.from(dto.content.length).toEitherNec,
-        ReadingTime.from(dto.content.length / 200.0).toEitherNec,
+        WordCount.from(dto.content.split(" ").length).toEitherNec,
+        ReadingTime.from(dto.content.split(" ").length / 200.0).toEitherNec,
         Likes.from(0).toEitherNec,
         Visibility.fromString(dto.visibility),
         BlogDate.create,
         BlogDate.create
-        ).parMapN(Note.apply)
+        ).parMapN(Blog.apply)

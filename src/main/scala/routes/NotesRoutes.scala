@@ -57,8 +57,8 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
 
     case req @ POST -> Root =>
       for
-        dto <- req.asJsonDecode[NoteDto]
-        note <- NoteDto.toDomain(dto).pure[F]
+        dto <- req.asJsonDecode[BlogDto]
+        note <- BlogDto.toDomain(dto).pure[F]
         res <- note.fold(UnprocessableEntity(_), b =>
           Created(repository.create(b).map(GetItem.apply)))
       yield res
@@ -72,9 +72,9 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
 
     case req @ PUT -> Root / NoteIdVar(id) =>
       for {
-        dto <- req.asJsonDecode[NoteDto]
+        dto <- req.asJsonDecode[BlogDto]
         foundNote <- repository.findNoteById(id)
-        updateNote = NoteDto.toDomain(dto)
+        updateNote = BlogDto.toDomain(dto)
         res <- (foundNote, updateNote) match
           case (None, _) => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
