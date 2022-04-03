@@ -6,7 +6,7 @@ Featuring:
 - Cats Effect 3
 - Tagless Final
 - Cats Validation
-- Monocle
+- Monocle Lenses
 - Refined Types
 - Http4s
 - Skunk
@@ -26,7 +26,7 @@ Sample Response:
         "bio": "Here to share my experiences with Scala!",
         "email": {
             "address": "scala.luvr@email.com",
-            "status": "Unverified"
+            "status": "Verified"
         },
         "tier": "Premium",
         "followers": 21,

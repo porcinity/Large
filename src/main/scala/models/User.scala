@@ -102,6 +102,10 @@ object User:
       case "Trial" => Trial
       case "Premium" => Premium
       case _ => Free
+    def makeString(tier: MembershipTier): String = tier match
+      case Trial => "Trial"
+      case Free => "Free"
+      case Premium => "Premium"
 
   type Liked = NonNegInt
   object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax

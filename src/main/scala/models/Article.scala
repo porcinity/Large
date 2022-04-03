@@ -61,6 +61,9 @@ object Article:
     def unsafeFromString(input: String): Visibility = input match
       case "Public" => Public
       case _ => Private
+    def makeString(visibility: Visibility): String = visibility match
+      case Public => "Public"
+      case Private => "Private"
 
   type WordCount = PosInt
   object WordCount extends RefinedTypeOps[WordCount, Int] with CatsRefinedTypeOpsSyntax

@@ -9,6 +9,7 @@ import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
+import models.Article.Visibility.makeString
 import skunk.codec.all.int8
 
 import java.time.LocalDate
@@ -92,7 +93,7 @@ private object ArticlesSql:
   val encoder: Encoder[Article] =
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date)
       .contramap { case Article(id, title, content, author, _, _, _, visibility, publish, edit) =>
-      id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value }
+      id.value ~ title.value ~ content.value ~ author.value ~ makeString(visibility) ~ publish.value ~ edit.value }
 
   val tagEncoder: Encoder[Tag] =
     ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.articleId.value }

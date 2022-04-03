@@ -1,7 +1,7 @@
 package repositories
 
 
-import cats.effect.{Resource, Concurrent, MonadCancelThrow}
+import cats.effect.{Concurrent, MonadCancelThrow, Resource}
 import models.User.*
 import Codecs.*
 import skunk.*
@@ -11,6 +11,7 @@ import skunk.codec.numeric.*
 import skunk.codec.temporal.*
 import skunk.data.Arr
 import cats.syntax.all.*
+import models.User.MembershipTier.makeString
 
 trait Users[F[_]]:
   def findAllUsers: F[List[User]]
@@ -66,7 +67,7 @@ private object UsersSql:
       )
     } (u =>
       u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
-        EmailStatus.makeString(u.email.status) ~ u.tier.toString ~ u.followers.value.toLong ~ u.following.value.toLong ~
+        EmailStatus.makeString(u.email.status) ~ makeString(u.tier) ~ u.followers.value.toLong ~ u.following.value.toLong ~
         u.likedArticles.value.toLong ~ u.joinDate.value ~ Arr.fromFoldable(u.articles))
 
   val selectAll: Query[Void, User] =
@@ -104,7 +105,7 @@ private object UsersSql:
         """
       .command
       .contramap { case User(id, name, bio, email, tier, _, _, _, j, _) =>
-      id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ tier.toString ~ j.value ~ bio.value}
+      id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ makeString(tier) ~ j.value ~ bio.value}
 
   val updateUser: Command[User] =
     sql"""
