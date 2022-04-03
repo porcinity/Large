@@ -20,7 +20,7 @@ import cats.data.Validated.Valid
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
 import mail.{JavaMailUtil, test}
-import models.Note.NoteDto
+import models.Blog.NoteDto
 import io.circe.syntax.*
 import monocle.syntax.all.*
 import monocle.refined.all.*

@@ -2,7 +2,7 @@ package repositories
 
 import cats.effect.{Concurrent, Resource}
 import models.Tag.*
-import models.Note.*
+import models.Blog.*
 import Codecs.*
 import skunk.*
 import skunk.implicits.*

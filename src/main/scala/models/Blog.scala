@@ -19,7 +19,7 @@ import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 
 
-object Note:
+object Blog:
   implicit val noteCodec: Codec[Note] = deriveCodec[Note]
   implicit val GetItemCodec: Codec[GetItem[Note]] = deriveCodec
   implicit val GetItemsCodec: Codec[GetItems[Note]] = deriveCodec
@@ -84,7 +84,8 @@ object Note:
     implicit val noteDtoCodec: Codec[NoteDto] = deriveCodec[NoteDto]
     def toDomain(dto: NoteDto): Either[NonEmptyChain[String], Note] =
       val id = NanoIdUtils.randomNanoId()
-      (Id.from(id).toEitherNec,
+      (
+        Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
         Author.from(dto.author).toEitherNec,

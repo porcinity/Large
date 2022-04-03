@@ -1,7 +1,7 @@
 package repositories
 
-import models.Note
-import models.Note.Author
+import models.Blog
+import models.Blog.Author
 import models.Tag.TagName
 import models.User.UserId
 import skunk.Codec
@@ -14,8 +14,8 @@ object Codecs:
   val noteAuthorId: Codec[Author] =
     varchar.imap[Author](Author.unsafeFrom)(_.value)
 
-  val noteId: Codec[Note.Id] =
-    varchar.imap[Note.Id](Note.Id.unsafeFrom)(_.value)
+  val noteId: Codec[Blog.Id] =
+    varchar.imap[Blog.Id](Blog.Id.unsafeFrom)(_.value)
 
   val tagName: Codec[TagName] =
     varchar.imap[TagName](TagName.unsafeFrom)(_.value)

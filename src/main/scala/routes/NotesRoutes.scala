@@ -4,7 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.effect.Concurrent
 import cats.Monad
 import common.*
-import models.Note.*
+import models.Blog.*
 import models.Tag.{TagDto, TagName}
 import org.http4s.*
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
