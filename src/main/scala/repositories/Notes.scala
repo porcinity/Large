@@ -14,11 +14,11 @@ import skunk.codec.all.int8
 import java.time.LocalDate
 
 trait Notes[F[_]]:
-  def findAllNotes: F[List[Blog]]
-  def findNoteById(id: Id): F[Option[Blog]]
-  def findNoteByUser(user: String): F[List[Blog]]
-  def findNoteByTag(tagName: TagName): F[List[Blog]]
-  def findNoteByTagAndUser(tagName: TagName, user: String): F[List[Blog]]
+  def findAllBlogs: F[List[Blog]]
+  def findBlogById(id: Id): F[Option[Blog]]
+  def findBlogByUser(user: String): F[List[Blog]]
+  def findBlogByTag(tagName: TagName): F[List[Blog]]
+  def findBlogByTagAndUser(tagName: TagName, user: String): F[List[Blog]]
   def create(note: Blog): F[Blog]
   def update(note: Blog): F[Blog]
   def delete(noteId: Id): F[Option[Blog]]
@@ -28,27 +28,27 @@ object Notes:
   import NotesSql.*
   def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Notes[F] =
     new Notes[F] {
-      override def findAllNotes: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
+      override def findAllBlogs: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
 
-      override def findNoteById(id: Id): F[Option[Blog]] = postgres.use(_.use { session =>
+      override def findBlogById(id: Id): F[Option[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
       })
 
-      override def findNoteByUser(user: String): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findBlogByUser(user: String): F[List[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectByUser).use { ps =>
           ps.stream(user, 15).compile.toList
         }
       })
 
-      override def findNoteByTag(tagName: TagName): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findBlogByTag(tagName: TagName): F[List[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectByTag).use { ps =>
           ps.stream(tagName, 15).compile.toList
         }
       })
 
-      override def findNoteByTagAndUser(tagName: TagName, user: String): F[List[Blog]] = postgres.use(_.use { session =>
+      override def findBlogByTagAndUser(tagName: TagName, user: String): F[List[Blog]] = postgres.use(_.use { session =>
         session.prepare(selectByTagAndUser).use { ps =>
           ps.stream((tagName, user),15).compile.toList
         }

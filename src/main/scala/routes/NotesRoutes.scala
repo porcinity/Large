@@ -43,15 +43,15 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root :? OptionalTagQueryParamMatcher(tag) +& OptionalUserIdParamMatch(user) => (tag, user) match {
-      case (Some(t), Some(u)) => Ok(repository.findNoteByTagAndUser(t, u))
-      case (Some(t), None) => Ok(repository.findNoteByTag(t))
-      case (None, Some(u)) => Ok(repository.findNoteByUser(u))
-      case (None, None) => Ok(repository.findAllNotes.map(GetItems.apply))
+      case (Some(t), Some(u)) => Ok(repository.findBlogByTagAndUser(t, u))
+      case (Some(t), None) => Ok(repository.findBlogByTag(t))
+      case (None, Some(u)) => Ok(repository.findBlogByUser(u))
+      case (None, None) => Ok(repository.findAllBlogs.map(GetItems.apply))
     }
 
     case GET -> Root / NoteIdVar(id) =>
       for {
-        note <- repository.findNoteById(id)
+        note <- repository.findBlogById(id)
         res <- note.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
@@ -73,7 +73,7 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
     case req @ PUT -> Root / NoteIdVar(id) =>
       for {
         dto <- req.asJsonDecode[BlogDto]
-        foundNote <- repository.findNoteById(id)
+        foundNote <- repository.findBlogById(id)
         updateNote = BlogDto.toDomain(dto)
         res <- (foundNote, updateNote) match
           case (None, _) => NotFound()
