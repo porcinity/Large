@@ -13,7 +13,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.Notes
+import repositories.Blogs
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*
@@ -29,7 +29,7 @@ import monocle.macros.syntax.AppliedFocusSyntax
 import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4sDsl[F] {
+class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)

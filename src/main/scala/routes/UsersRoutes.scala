@@ -9,7 +9,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.{Notes, Users}
+import repositories.{Blogs, Users}
 import models.User.Codecs.*
 import models.User.*
 import cats.Monad

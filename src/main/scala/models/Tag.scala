@@ -17,7 +17,7 @@ object Tag {
   implicit val getItemCodec: Codec[GetItem[TagName]] = deriveCodec
   implicit val getItemsCodec: Codec[GetItems[TagName]] = deriveCodec
 
-  case class Tag(id: TagId, name: TagName, noteId: TaggedNote)
+  case class Tag(id: TagId, name: TagName, blogId: TaggedBlog)
 
   type TagId = NonEmptyString
   object TagId extends RefinedTypeOps[TagId, String] with CatsRefinedTypeOpsSyntax
@@ -25,8 +25,8 @@ object Tag {
   type TagName = NonEmptyString
   object TagName extends RefinedTypeOps[TagName, String] with CatsRefinedTypeOpsSyntax
 
-  type TaggedNote = NonEmptyString
-  object TaggedNote extends RefinedTypeOps[TaggedNote, String] with CatsRefinedTypeOpsSyntax
+  type TaggedBlog = NonEmptyString
+  object TaggedBlog extends RefinedTypeOps[TaggedBlog, String] with CatsRefinedTypeOpsSyntax
 
   case class TagDto(name: String)
 
@@ -38,6 +38,6 @@ object Tag {
       (
         TagId.from(tagId).toEitherNec,
         TagName.from(dto.name).toEitherNec,
-        TaggedNote.from(id.value).toEitherNec
+        TaggedBlog.from(id.value).toEitherNec
       ).parMapN(Tag.apply)
 }

@@ -13,21 +13,21 @@ import skunk.codec.all.int8
 
 import java.time.LocalDate
 
-trait Notes[F[_]]:
+trait Blogs[F[_]]:
   def findAllBlogs: F[List[Blog]]
   def findBlogById(id: Id): F[Option[Blog]]
   def findBlogByUser(user: String): F[List[Blog]]
   def findBlogByTag(tagName: TagName): F[List[Blog]]
   def findBlogByTagAndUser(tagName: TagName, user: String): F[List[Blog]]
-  def create(note: Blog): F[Blog]
-  def update(note: Blog): F[Blog]
-  def delete(noteId: Id): F[Option[Blog]]
+  def create(blog: Blog): F[Blog]
+  def update(blog: Blog): F[Blog]
+  def delete(blogId: Id): F[Option[Blog]]
   def addTag(tag: Tag): F[Tag]
 
-object Notes:
-  import NotesSql.*
-  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Notes[F] =
-    new Notes[F] {
+object Blogs:
+  import BlogsSql.*
+  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Blogs[F] =
+    new Blogs[F] {
       override def findAllBlogs: F[List[Blog]] = postgres.use(_.use(_.execute(selectAll)))
 
       override def findBlogById(id: Id): F[Option[Blog]] = postgres.use(_.use { session =>
@@ -54,16 +54,16 @@ object Notes:
         }
       })
 
-      override def create(note: Blog): F[Blog] = postgres.use(_.use { session =>
-        session.prepare(insertNote).use(_.execute(note)).as(note)
+      override def create(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+        session.prepare(insertNote).use(_.execute(blog)).as(blog)
       })
 
-      override def update(note: Blog): F[Blog] = postgres.use(_.use { session =>
-        session.prepare(updateNote).use(_.execute(note)).as(note)
+      override def update(blog: Blog): F[Blog] = postgres.use(_.use { session =>
+        session.prepare(updateNote).use(_.execute(blog)).as(blog)
       })
 
-      override def delete(noteId: Id): F[Option[Blog]] = postgres.use(_.use { session =>
-        session.prepare(deleteNote).use(ps => ps.option(noteId))
+      override def delete(blogId: Id): F[Option[Blog]] = postgres.use(_.use { session =>
+        session.prepare(deleteNote).use(ps => ps.option(blogId))
       })
 
       override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
@@ -71,9 +71,9 @@ object Notes:
       })
     }
 
-private object NotesSql:
+private object BlogsSql:
   val decoder: Decoder[Blog] =
-    ( blogId ~ varchar ~ varchar ~ noteAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
+    ( blogId ~ varchar ~ varchar ~ blogAuthorId ~ int8 ~ varchar ~ date ~ date ).map {
       case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit =>
         Blog(
           nId,
@@ -95,7 +95,7 @@ private object NotesSql:
       id.value ~ title.value ~ content.value ~ author.value ~ visibility.toString ~ publish.value ~ edit.value }
 
   val tagEncoder: Encoder[Tag] =
-    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.noteId.value }
+    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.blogId.value }
 
   val selectAll: Query[Void, Blog] =
     sql"""

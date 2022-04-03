@@ -11,7 +11,7 @@ object Codecs:
   val userId: Codec[UserId] =
     varchar.imap[UserId](UserId.unsafeFrom)(_.value)
 
-  val noteAuthorId: Codec[Author] =
+  val blogAuthorId: Codec[Author] =
     varchar.imap[Author](Author.unsafeFrom)(_.value)
 
   val blogId: Codec[Blog.Id] =
