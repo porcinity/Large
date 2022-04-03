@@ -11,10 +11,10 @@ object Codecs:
   val userId: Codec[UserId] =
     varchar.imap[UserId](UserId.unsafeFrom)(_.value)
 
-  val blogAuthorId: Codec[Author] =
+  val articleAuthorId: Codec[Author] =
     varchar.imap[Author](Author.unsafeFrom)(_.value)
 
-  val blogId: Codec[Article.Id] =
+  val articleId: Codec[Article.Id] =
     varchar.imap[Article.Id](Article.Id.unsafeFrom)(_.value)
 
   val tagName: Codec[TagName] =

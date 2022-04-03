@@ -13,7 +13,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.Blogs
+import repositories.Articles
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*
@@ -29,7 +29,7 @@ import monocle.macros.syntax.AppliedFocusSyntax
 import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4sDsl[F] {
+class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
@@ -43,15 +43,15 @@ class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4s
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root :? OptionalTagQueryParamMatcher(tag) +& OptionalUserIdParamMatch(user) => (tag, user) match {
-      case (Some(t), Some(u)) => Ok(repository.findBlogByTagAndUser(t, u))
-      case (Some(t), None) => Ok(repository.findBlogByTag(t))
-      case (None, Some(u)) => Ok(repository.findBlogByUser(u))
-      case (None, None) => Ok(repository.findAllBlogs.map(GetItems.apply))
+      case (Some(t), Some(u)) => Ok(repository.findArticleByTagAndUser(t, u))
+      case (Some(t), None) => Ok(repository.findArticleByTag(t))
+      case (None, Some(u)) => Ok(repository.findArticleByUser(u))
+      case (None, None) => Ok(repository.findAllArticles.map(GetItems.apply))
     }
 
     case GET -> Root / BlogIdVar(id) =>
       for {
-        blog <- repository.findBlogById(id)
+        blog <- repository.findArticleById(id)
         res <- blog.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
@@ -73,7 +73,7 @@ class BlogsRoutes[F[_]: JsonDecoder: Monad](repository: Blogs[F]) extends Http4s
     case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.asJsonDecode[ArticleDto]
-        foundBlog <- repository.findBlogById(id)
+        foundBlog <- repository.findArticleById(id)
         updateBlog = ArticleDto.toDomain(dto)
         res <- (foundBlog, updateBlog) match
           case (None, _) => NotFound()
