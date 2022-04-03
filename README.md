@@ -98,7 +98,7 @@ Response:
 ```
 ### Blogs
 
-`GET api/blogs/$id`
+`GET api/article/$id`
 
 Response:
 ```json
