@@ -34,9 +34,9 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
 
-  object NoteIdVar:
+  object BlogIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
-  
+
   object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
   object OptionalUserIdParamMatch extends OptionalQueryParamDecoderMatcher[String]("user")
 
@@ -49,41 +49,41 @@ class NotesRoutes[F[_]: JsonDecoder: Monad](repository: Notes[F]) extends Http4s
       case (None, None) => Ok(repository.findAllBlogs.map(GetItems.apply))
     }
 
-    case GET -> Root / NoteIdVar(id) =>
+    case GET -> Root / BlogIdVar(id) =>
       for {
-        note <- repository.findBlogById(id)
-        res <- note.fold(NotFound())(n => Ok(GetItem(n)))
+        blog <- repository.findBlogById(id)
+        res <- blog.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
     case req @ POST -> Root =>
       for
         dto <- req.asJsonDecode[BlogDto]
-        note <- BlogDto.toDomain(dto).pure[F]
-        res <- note.fold(UnprocessableEntity(_), b =>
+        blog <- BlogDto.toDomain(dto).pure[F]
+        res <- blog.fold(UnprocessableEntity(_), b =>
           Created(repository.create(b).map(GetItem.apply)))
       yield res
 
-    case req @ POST -> Root / NoteIdVar(id) / "addTag" =>
+    case req @ POST -> Root / BlogIdVar(id) / "addTag" =>
       for {
         dto <- req.asJsonDecode[TagDto]
         tag <- TagDto.toDomain(dto, id).pure[F]
         res <- tag.fold(UnprocessableEntity(_), t => Ok(repository.addTag(t)))
       } yield res
 
-    case req @ PUT -> Root / NoteIdVar(id) =>
+    case req @ PUT -> Root / BlogIdVar(id) =>
       for {
         dto <- req.asJsonDecode[BlogDto]
-        foundNote <- repository.findBlogById(id)
-        updateNote = BlogDto.toDomain(dto)
-        res <- (foundNote, updateNote) match
+        foundBlog <- repository.findBlogById(id)
+        updateBlog = BlogDto.toDomain(dto)
+        res <- (foundBlog, updateBlog) match
           case (None, _) => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
           case (Some(b), Right(u)) =>
-            val newNote = b.copy(title = u.title, content = u.content, visibility = u.visibility)
-            Created(repository.update(newNote).map(GetItem.apply))
+            val newBlog = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+            Created(repository.update(newBlog).map(GetItem.apply))
       } yield res
 
-    case DELETE -> Root / NoteIdVar(id) =>
+    case DELETE -> Root / BlogIdVar(id) =>
       for {
         res <- repository.delete(id)
         y <- res.fold(NotFound())( _ => NoContent())

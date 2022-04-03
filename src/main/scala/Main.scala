@@ -21,24 +21,24 @@ object Main extends IOApp:
         port = 5432,
         user = "pigg",
         password = Some("test"),
-        database = "Notes",
+        database = "Large",
         max = 10
       )
 
     val usersRepo: Users[IO] = Users.make(session)
 
-    val notesRepo: Notes[IO] = Notes.make(session)
+    val blogRepo: Notes[IO] = Notes.make(session)
 
     val tagsRepo: Tags[IO] = Tags.make(session)
 
-    val notesService: NotesRoutes[IO] = new NotesRoutes(notesRepo)
+    val blogService: NotesRoutes[IO] = new NotesRoutes(blogRepo)
 
     val userService: UsersRoutes[IO] = new UsersRoutes(usersRepo)
 
     val tagsService: TagsRoutes[IO] = new TagsRoutes[IO](tagsRepo)
 
     val httpApp = Router(
-      "/notes" -> notesService.routes,
+      "/blogs" -> blogService.routes,
       "/users" -> userService.routes,
       "/tags" -> tagsService.routes
     ).orNotFound
