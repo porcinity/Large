@@ -44,9 +44,15 @@ object User:
                    followers: Followers,
                    following: Following,
                    likedArticles: Liked,
-                   joinDate: JoinDate
+                   joinDate: JoinDate,
+                   articles: Articles
                  )
 
+  type Articles = List[String]
+  object Articles:
+    def from(list: List[String]): Either[NonEmptyChain[String], Articles] =
+      Right(list)
+      
   type UserId = NonEmptyFiniteString[30]
   object UserId extends RefinedTypeOps[UserId, String] with CatsRefinedTypeOpsSyntax
 
@@ -125,7 +131,8 @@ object User:
         Followers.from(0).toEitherNec,
         Following.from(0).toEitherNec,
         Liked.from(0).toEitherNec,
-        JoinDate.create(LocalDate.now())
+        JoinDate.create(LocalDate.now()),
+        Articles.from(List())
         ).parMapN(User.apply)
 
   enum UpdateUser:

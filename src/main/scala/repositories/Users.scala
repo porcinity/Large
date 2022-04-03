@@ -9,6 +9,7 @@ import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.numeric.*
 import skunk.codec.temporal.*
+import skunk.data.Arr
 import cats.syntax.all.*
 
 trait Users[F[_]]:
@@ -47,8 +48,8 @@ private object UsersSql:
   import repositories.Codecs.*
 
   val codec: Codec[User] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date).imap {
-      case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d => User(
+    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date ~ _varchar).imap {
+      case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d ~ list => User(
         UserId.unsafeFrom(i),
         Username.unsafeFrom(n),
         Biography.unsafeFrom(b),
@@ -60,12 +61,13 @@ private object UsersSql:
         Followers.unsafeFrom(followers.toInt),
         Following.unsafeFrom(following.toInt),
         Liked.unsafeFrom(l.toInt),
-        JoinDate(d)
+        JoinDate(d),
+        list.toList
       )
     } (u =>
       u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
         EmailStatus.makeString(u.email.status) ~ u.tier.toString ~ u.followers.value.toLong ~ u.following.value.toLong ~
-        u.likedArticles.value.toLong ~ u.joinDate.value)
+        u.likedArticles.value.toLong ~ u.joinDate.value ~ Arr.fromFoldable(u.articles))
 
   val selectAll: Query[Void, User] =
    sql"""
@@ -73,8 +75,11 @@ private object UsersSql:
        (select count(*) from follows_map f where f.user_id = u.user_id) as followers,
        (select count(*) from follows_map f where f.follower_id = u.user_id) as following,
        (select count(*) from likes_map l where l.like_user = u.user_id) as likes,
-       u.user_join_date
+       u.user_join_date,
+       array_remove(array_agg(b.blog_id), NULL) as blog_posts
     from users u
+    left join blogs b on u.user_id = b.blog_author
+    group by u.user_id
     """.query(codec)
 
   val selectById: Query[UserId, User] =
@@ -83,9 +88,12 @@ private object UsersSql:
                 (select count(*) from follows_map f where f.user_id = u.user_id),
                 (select count(*) from follows_map f where f.follower_id = u.user_id),
                 (select count(*) from likes_map l where l.like_user = u.user_id),
-                u.user_join_date
+                u.user_join_date,
+                array_remove(array_agg(b.blog_id), NULL) as blog_posts
          from users u
+         join blogs b on u.user_id = b.blog_author
          where u.user_id = $userId
+         group by u.user_id
          """
       .query(codec)
 
@@ -95,7 +103,7 @@ private object UsersSql:
         values ($varchar, $varchar, $varchar, $varchar, $varchar, $date, $varchar)
         """
       .command
-      .contramap { case User(id, name, bio, email, tier, _, _, _, j) =>
+      .contramap { case User(id, name, bio, email, tier, _, _, _, j, _) =>
       id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ tier.toString ~ j.value ~ bio.value}
 
   val updateUser: Command[User] =
@@ -105,7 +113,7 @@ private object UsersSql:
             user_email_address = $varchar,
             user_email_status = $varchar
         where user_id = $varchar
-    """.command.contramap { case User(id, name, _, email, _, _, _, _, _) =>
+    """.command.contramap { case User(id, name, _, email, _, _, _, _, _, _) =>
       name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
 
   val deleteUser: Query[UserId, User] =
