@@ -5,7 +5,7 @@ import org.http4s.implicits.*
 import org.http4s.syntax.all.*
 import org.http4s.server.Router
 import repositories.{Blogs, Tags, Users}
-import routes.{NotesRoutes, TagsRoutes, UsersRoutes}
+import routes.{BlogsRoutes, TagsRoutes, UsersRoutes}
 import com.comcast.ip4s.{ipv4, port}
 import skunk.*
 import skunk.implicits.*
@@ -31,7 +31,7 @@ object Main extends IOApp:
 
     val tagsRepo: Tags[IO] = Tags.make(session)
 
-    val blogService: NotesRoutes[IO] = new NotesRoutes(blogRepo)
+    val blogService: BlogsRoutes[IO] = new BlogsRoutes(blogRepo)
 
     val userService: UsersRoutes[IO] = new UsersRoutes(usersRepo)
 
