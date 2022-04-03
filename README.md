@@ -61,9 +61,9 @@ Response:
                 "status": "Unverified"
             },
             "tier": "Premium",
-            "followers": 0,
-            "following": 0,
-            "likedArticles": 0,
+            "followers": 18,
+            "following": 23,
+            "likedArticles": 40,
             "joinDate": "2022-04-01"
         }
 }
