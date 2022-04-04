@@ -62,6 +62,16 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         )
       } yield res
 
+    case GET -> Root / UserIdVar(id) / "followers" =>
+      for {
+        res <- Ok(repository.findFollowers(id).map(GetItems.apply))
+      } yield res
+
+    case GET -> Root / UserIdVar(id) / "following" =>
+      for {
+        res <- Ok(repository.findFollowing(id).map(GetItems.apply))
+      } yield res
+
     case req @ POST -> Root / UserIdVar(id) / "follow" =>
       for {
         dto <- req.asJsonDecode[FollowUserDto]
@@ -74,7 +84,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
         res <- Ok(repository.unfollowUser(id, dto.asUser))
       } yield res
 
-    case req @ POST -> Root / UserIdVar(id) / "addNote" =>
+    case req @ POST -> Root / UserIdVar(id) / "addArticle" =>
       for {
         dto <- req.asJsonDecode[ArticleDto]
 

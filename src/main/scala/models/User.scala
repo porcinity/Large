@@ -34,6 +34,7 @@ object User:
     implicit val dtoCodec: Codec[UserDto] = deriveCodec
     implicit val userCodec: Codec[User] = deriveCodec
     implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
+    implicit val listIdsCodec: Codec[GetItems[UserId]] = deriveCodec
 
   case class FollowUserDto(asUser: UserId)
   case class UserDto(name: String, bio: String, email: String)

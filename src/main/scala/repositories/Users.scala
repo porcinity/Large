@@ -21,6 +21,8 @@ trait Users[F[_]]:
   def delete(userId: UserId): F[Option[User]]
   def followUser(userId: UserId, followerId: UserId): F[Unit]
   def unfollowUser(userId: UserId, followerId: UserId): F[Unit]
+  def findFollowers(userId: UserId): F[List[UserId]]
+  def findFollowing(userId: UserId): F[List[UserId]]
 
 object Users:
   import UsersSql.*
@@ -52,6 +54,18 @@ object Users:
 
       override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] = pg.use(_.use { session =>
         session.prepare(deleteFollowMap).use(_.execute(userId, followerId)).void
+      })
+
+      override def findFollowers(userId: UserId): F[List[UserId]] = pg.use(_.use { session =>
+        session.prepare(findFollowersMap).use { ps =>
+          ps.stream(userId, 100).compile.toList
+        }
+      })
+
+      override def findFollowing(userId: UserId): F[List[UserId]] = pg.use(_.use { session =>
+        session.prepare(findFollowingMap).use { ps =>
+          ps.stream(userId, 100).compile.toList
+        }
       })
     }
 
@@ -144,3 +158,17 @@ private object UsersSql:
          where user_id = $userId
          and follower_id = $userId
          """.command
+
+  val findFollowersMap: Query[UserId, UserId] =
+    sql"""
+         select follower_id as followers
+         from follows_map
+         where user_id = $userId;
+         """.query(userId)
+
+  val findFollowingMap: Query[UserId, UserId] =
+    sql"""
+         select user_id as following
+         from follows_map
+         where follower_id = $userId;
+         """.query(userId)
