@@ -76,6 +76,12 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         res <- Ok(repository.likeArticle(id, dto.asUser))
       } yield res
 
+    case req @ DELETE -> Root / ArticleIdVar(id) / "like" =>
+      for {
+        dto <- req.asJsonDecode[LikeArticleDto]
+        res <- Ok(repository.unlikeArticle(id, dto.asUser))
+      } yield res
+
     case req @ PUT -> Root / ArticleIdVar(id) =>
       for {
         dto <- req.asJsonDecode[ArticleDto]

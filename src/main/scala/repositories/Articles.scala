@@ -26,6 +26,7 @@ trait Articles[F[_]]:
   def delete(articleId: Id): F[Option[Article]]
   def addTag(tag: Tag): F[Tag]
   def likeArticle(articleId: Id, userId: UserId): F[Unit]
+  def unlikeArticle(articleId: Id, userId: UserId): F[Unit]
 
 object Articles:
   import ArticlesSql.*
@@ -75,6 +76,10 @@ object Articles:
 
       override def likeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use(_.use { session =>
         session.prepare(insertLikeMap).use(_.execute(articleId, userId)).void
+      })
+
+      override def unlikeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use(_.use { session =>
+        session.prepare(deleteLikeMap).use(_.execute(articleId, userId)).void
       })
     }
 
@@ -194,4 +199,11 @@ private object ArticlesSql:
     sql"""
         insert into likes_map (like_article, like_user)
         values ($articleId, $userId)
+         """.command
+    
+  val deleteLikeMap: Command[Id ~ UserId] =
+    sql"""
+        delete from likes_map
+        where like_article = $articleId
+        and like_user = $userId
          """.command
