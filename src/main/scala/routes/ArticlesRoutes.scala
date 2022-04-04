@@ -6,6 +6,7 @@ import cats.Monad
 import common.*
 import models.Article.*
 import models.Tag.{TagDto, TagName}
+import models.User
 import org.http4s.*
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
@@ -34,9 +35,13 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
 
+  implicit val userIdDecoder: QueryParamDecoder[User.UserId] =
+    QueryParamDecoder[String].map(User.UserId.unsafeFrom)
+
   object ArticleIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
 
+  object UserIdParamMatcher extends QueryParamDecoderMatcher[User.UserId]("asUser")
   object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
   object OptionalUserIdParamMatch extends OptionalQueryParamDecoderMatcher[String]("user")
 
@@ -74,18 +79,18 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         res <- Ok(repository.unlikeArticle(id, dto.asUser))
       } yield res
 
-//    case req @ PUT -> Root / ArticleIdVar(id) =>
-//      for {
-//        dto <- req.asJsonDecode[ArticleDto]
-//        foundArticle <- repository.findArticleById(id)
-//        updateArticle = ArticleDto.toDomain(dto)
-//        res <- (foundArticle, updateArticle) match
-//          case (None, _) => NotFound()
-//          case (_, Left(e)) => UnprocessableEntity(e)
-//          case (Some(b), Right(u)) =>
-//            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
-//            Created(repository.update(newArticle).map(GetItem.apply))
-//      } yield res
+    case req @ PUT -> Root / ArticleIdVar(id) :? UserIdParamMatcher(user) =>
+      for {
+        dto <- req.asJsonDecode[ArticleDto]
+        foundArticle <- repository.findArticleById(id)
+        updateArticle = ArticleDto.toDomain(dto, user)
+        res <- (foundArticle, updateArticle) match
+          case (None, _) => NotFound()
+          case (_, Left(e)) => UnprocessableEntity(e)
+          case (Some(b), Right(u)) =>
+            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+            Created(repository.update(newArticle).map(GetItem.apply))
+      } yield res
 
     case DELETE -> Root / ArticleIdVar(id) =>
       for {
