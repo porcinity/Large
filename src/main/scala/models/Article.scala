@@ -88,18 +88,18 @@ object Article:
       Right(LocalDate.now())
     extension (x: ArticleDate) def value: LocalDate = x
 
-  case class ArticleDto(title: String, content: String, author: String, visibility: String)
+  case class ArticleDto(title: String, content: String, visibility: String)
   case class LikeArticleDto(asUser: User.UserId)
 
   object ArticleDto:
     implicit val articleDtoCodec: Codec[ArticleDto] = deriveCodec
-    def toDomain(dto: ArticleDto): Either[NonEmptyChain[String], Article] =
+    def toDomain(dto: ArticleDto, author: User.UserId): Either[NonEmptyChain[String], Article] =
       val id = NanoIdUtils.randomNanoId()
       (
         Id.from(id).toEitherNec,
         Title.from(dto.title).toEitherNec,
         Content.from(dto.content).toEitherNec,
-        Author.from(dto.author).toEitherNec,
+        Author.from(author.value).toEitherNec,
         WordCount.from(dto.content.split(" ").length).toEitherNec,
         ReadingTime.from(dto.content.split(" ").length / 200.0).toEitherNec,
         Likes.from(0).toEitherNec,

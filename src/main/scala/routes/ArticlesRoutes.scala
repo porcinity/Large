@@ -55,14 +55,6 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         res <- article.fold(NotFound())(n => Ok(GetItem(n)))
       } yield res
 
-    case req @ POST -> Root =>
-      for
-        dto <- req.asJsonDecode[ArticleDto]
-        article <- ArticleDto.toDomain(dto).pure[F]
-        res <- article.fold(UnprocessableEntity(_), b =>
-          Created(repository.create(b).map(GetItem.apply)))
-      yield res
-
     case req @ POST -> Root / ArticleIdVar(id) / "addTag" =>
       for {
         dto <- req.asJsonDecode[TagDto]
@@ -82,18 +74,18 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         res <- Ok(repository.unlikeArticle(id, dto.asUser))
       } yield res
 
-    case req @ PUT -> Root / ArticleIdVar(id) =>
-      for {
-        dto <- req.asJsonDecode[ArticleDto]
-        foundArticle <- repository.findArticleById(id)
-        updateArticle = ArticleDto.toDomain(dto)
-        res <- (foundArticle, updateArticle) match
-          case (None, _) => NotFound()
-          case (_, Left(e)) => UnprocessableEntity(e)
-          case (Some(b), Right(u)) =>
-            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
-            Created(repository.update(newArticle).map(GetItem.apply))
-      } yield res
+//    case req @ PUT -> Root / ArticleIdVar(id) =>
+//      for {
+//        dto <- req.asJsonDecode[ArticleDto]
+//        foundArticle <- repository.findArticleById(id)
+//        updateArticle = ArticleDto.toDomain(dto)
+//        res <- (foundArticle, updateArticle) match
+//          case (None, _) => NotFound()
+//          case (_, Left(e)) => UnprocessableEntity(e)
+//          case (Some(b), Right(u)) =>
+//            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+//            Created(repository.update(newArticle).map(GetItem.apply))
+//      } yield res
 
     case DELETE -> Root / ArticleIdVar(id) =>
       for {

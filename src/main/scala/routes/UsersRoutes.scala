@@ -26,7 +26,7 @@ import monocle.syntax.all.*
 import monocle.refined.all.*
 import UpdateUser.GenericDerivation.*
 import common.*
-class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4sDsl[F] {
+class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: Articles[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId.unsafeFrom(str))
@@ -87,8 +87,10 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F]) extends Http4s
     case req @ POST -> Root / UserIdVar(id) / "addArticle" =>
       for {
         dto <- req.asJsonDecode[ArticleDto]
-
-      } yield ???
+        article <- ArticleDto.toDomain(dto, id).pure[F]
+        res <- article.fold(UnprocessableEntity(_), b =>
+          Created(articleRepo.create(b).map(GetItem.apply)))
+      } yield res
 
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
