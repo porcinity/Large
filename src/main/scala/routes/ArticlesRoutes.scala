@@ -1,7 +1,6 @@
 package routes
 
 import cats.data.Validated.{Invalid, Valid}
-import cats.effect.Concurrent
 import cats.Monad
 import common.*
 import models.Article.*
@@ -19,15 +18,7 @@ import repositories.Articles
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-//import cats.syntax.*
 import cats.implicits.*
-
-
-//import monocle.syntax.*
-import monocle.Lens
-import monocle.macros.GenLens
-import monocle.macros.syntax.AppliedFocusSyntax
-import monocle.syntax.all.*
 
 // The type constraint of Concurrent is necessary to decode Json
 class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Http4sDsl[F] {
