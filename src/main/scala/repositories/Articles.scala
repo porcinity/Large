@@ -11,6 +11,7 @@ import skunk.codec.temporal.*
 import cats.syntax.all.*
 import models.Article.Visibility.makeString
 import skunk.codec.all.int8
+import models.User.UserId
 
 import java.time.LocalDate
 
@@ -24,6 +25,7 @@ trait Articles[F[_]]:
   def update(article: Article): F[Article]
   def delete(articleId: Id): F[Option[Article]]
   def addTag(tag: Tag): F[Tag]
+  def likeArticle(articleId: Id, userId: UserId): F[Unit]
 
 object Articles:
   import ArticlesSql.*
@@ -56,19 +58,23 @@ object Articles:
       })
 
       override def create(article: Article): F[Article] = postgres.use(_.use { session =>
-        session.prepare(insertNote).use(_.execute(article)).as(article)
+        session.prepare(insertArticle).use(_.execute(article)).as(article)
       })
 
       override def update(article: Article): F[Article] = postgres.use(_.use { session =>
-        session.prepare(updateNote).use(_.execute(article)).as(article)
+        session.prepare(updateArticle).use(_.execute(article)).as(article)
       })
 
       override def delete(blogId: Id): F[Option[Article]] = postgres.use(_.use { session =>
-        session.prepare(deleteNote).use(ps => ps.option(blogId))
+        session.prepare(deleteArticle).use(ps => ps.option(blogId))
       })
 
       override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
         session.prepare(insertTag).use(_.execute(tag)).as(tag)
+      })
+
+      override def likeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use(_.use { session =>
+        session.prepare(insertLikeMap).use(_.execute(articleId, userId)).void
       })
     }
 
@@ -132,13 +138,13 @@ private object ArticlesSql:
         group by a.article_id, a.article_title, a.article_content, a.article_author, a.article_visibility, a.article_publish_date, a.article_last_edit_date;
     """.query(decoder)
 
-  val insertNote: Command[Article] =
+  val insertArticle: Command[Article] =
     sql"""
         insert into articles
         values ($encoder)
     """.command
 
-  val updateNote: Command[Article] =
+  val updateArticle: Command[Article] =
     sql"""
         update articles
         set article_title = $varchar,
@@ -150,7 +156,7 @@ private object ArticlesSql:
       title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
     }
 
-  val deleteNote: Query[Id, Article] =
+  val deleteArticle: Query[Id, Article] =
     sql"""
         delete from articles where article_id = $articleId returning *
     """.query(decoder)
@@ -183,3 +189,9 @@ private object ArticlesSql:
         and t.tag_id = $tagName
         and a.article_id = $varchar
     """.query(decoder)
+
+  val insertLikeMap: Command[Id ~ UserId] =
+    sql"""
+        insert into likes_map (like_article, like_user)
+        values ($articleId, $userId)
+         """.command

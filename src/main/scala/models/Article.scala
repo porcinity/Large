@@ -21,8 +21,9 @@ import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 object Article:
   implicit val articleCodec: Codec[Article] = deriveCodec
-  implicit val GetItemCodec: Codec[GetItem[Article]] = deriveCodec
-  implicit val GetItemsCodec: Codec[GetItems[Article]] = deriveCodec
+  implicit val getItemCodec: Codec[GetItem[Article]] = deriveCodec
+  implicit val getItemsCodec: Codec[GetItems[Article]] = deriveCodec
+  implicit val likeArticleCodec: Codec[LikeArticleDto] = deriveCodec
 
   case class Article(
                       id: Id,
@@ -88,6 +89,7 @@ object Article:
     extension (x: ArticleDate) def value: LocalDate = x
 
   case class ArticleDto(title: String, content: String, author: String, visibility: String)
+  case class LikeArticleDto(asUser: User.UserId)
 
   object ArticleDto:
     implicit val articleDtoCodec: Codec[ArticleDto] = deriveCodec

@@ -70,6 +70,12 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         res <- tag.fold(UnprocessableEntity(_), t => Ok(repository.addTag(t)))
       } yield res
 
+    case req @ POST -> Root / ArticleIdVar(id) / "like" =>
+      for {
+        dto <- req.asJsonDecode[LikeArticleDto]
+        res <- Ok(repository.likeArticle(id, dto.asUser))
+      } yield res
+
     case req @ PUT -> Root / ArticleIdVar(id) =>
       for {
         dto <- req.asJsonDecode[ArticleDto]

@@ -4,7 +4,7 @@ import doobie.{Read, Write}
 import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import io.circe.syntax.*
-import io.circe.generic.auto.*
+//import io.circe.generic.auto.*
 
 import java.time.LocalDate
 import com.aventrix.jnanoid.jnanoid.*
