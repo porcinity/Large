@@ -19,6 +19,8 @@ trait Users[F[_]]:
   def create(user: User): F[User]
   def update(user: User): F[User]
   def delete(userId: UserId): F[Option[User]]
+  def followUser(userId: UserId, followerId: UserId): F[Unit]
+  def unfollowUser(userId: UserId, followerId: UserId): F[Unit]
 
 object Users:
   import UsersSql.*
@@ -42,6 +44,14 @@ object Users:
 
       override def delete(userId: UserId): F[Option[User]] = pg.use(_.use { session =>
         session.prepare(deleteUser).use(ps => ps.option(userId))
+      })
+
+      override def followUser(userId: UserId, followerId: UserId): F[Unit] = pg.use(_.use { session =>
+        session.prepare(insertFollowMap).use(_.execute(userId, followerId)).void
+      })
+
+      override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] = pg.use(_.use { session =>
+        session.prepare(deleteFollowMap).use(_.execute(userId, followerId)).void
       })
     }
 
@@ -92,7 +102,7 @@ private object UsersSql:
                 u.user_join_date,
                 array_remove(array_agg(a.article_id), NULL) as articles
          from users u
-         join articles a on u.user_id = a.article_author
+         left join articles a on u.user_id = a.article_author
          where u.user_id = $userId
          group by u.user_id
          """
@@ -121,3 +131,16 @@ private object UsersSql:
     sql"""
         delete from users where user_id = $userId returning *
     """.query(codec)
+
+  val insertFollowMap: Command[UserId ~ UserId] =
+    sql"""
+        insert into follows_map (user_id, follower_id)
+        values ($userId, $userId)
+         """.command
+
+  val deleteFollowMap: Command[UserId ~ UserId] =
+    sql"""
+         delete from follows_map
+         where user_id = $userId
+         and follower_id = $userId
+         """.command
