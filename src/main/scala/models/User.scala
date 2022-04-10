@@ -4,27 +4,20 @@ import doobie.{Read, Write}
 import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import io.circe.syntax.*
-//import io.circe.generic.auto.*
-
 import java.time.LocalDate
 import com.aventrix.jnanoid.jnanoid.*
 import eu.timepit.refined.boolean.And
 import eu.timepit.refined.string.MatchesRegex
 import eu.timepit.refined.types.numeric.*
-
-//import models.ValidationExtractors.*
-
-import scala.annotation.targetName
 import cats.data.*
 import cats.implicits.*
 import eu.timepit.refined.api.*
 import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.{NonEmptyFiniteString, NonEmptyString}
-
-
 import org.latestbit.circe.adt.codec.*
 import io.circe.refined._
 import common.{GetItem, GetItems}
+
 object User:
 
   object Codecs:
