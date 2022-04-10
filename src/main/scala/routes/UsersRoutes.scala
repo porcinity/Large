@@ -14,18 +14,16 @@ import models.User.Codecs.*
 import models.User.*
 import cats.Monad
 import cats.implicits.*
-import cats.syntax.flatMap.*
-import cats.syntax.functor.*
 import cats.data.Validated.Valid
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
-import mail.{JavaMailUtil, test}
 import models.Article.ArticleDto
 import io.circe.syntax.*
 import monocle.syntax.all.*
 import monocle.refined.all.*
 import UpdateUser.GenericDerivation.*
 import common.*
+
 class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: Articles[F]) extends Http4sDsl[F] {
 
   object UserIdVar:
