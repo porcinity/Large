@@ -40,7 +40,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: A
     case GET -> Root / UserIdVar(id) =>
       for {
         u <- repository.findUserById(id)
-        res <- u.fold(NotFound())(u => Ok(GetItem(u)))
+        res <- u.fold(NotFound())(x => Ok(GetItem(x)))
       } yield res
 
     case req @ POST -> Root =>
