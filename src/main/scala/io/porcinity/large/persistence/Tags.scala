@@ -16,13 +16,13 @@ trait Tags[F[_]]:
 
 object Tags:
   import TagsSql.*
-  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Tags[F] =
+  def make[F[_]: Concurrent](postgres: Resource[F, Session[F]]): Tags[F] =
     new Tags[F] {
-      override def findAllTags: F[List[TagName]] = postgres.use(_.use(_.execute(selectAll)))
+      override def findAllTags: F[List[TagName]] = postgres.use(_.execute(selectAll))
 
-      override def createTag(name: String): F[Unit] = postgres.use(_.use { session =>
+      override def createTag(name: String): F[Unit] = postgres.use { session =>
         session.prepare(insert).use(_.execute(TagName.unsafeFrom(name))).void
-      })
+      }
 
 //      override def updateTag(name: String): F[Unit] = ???
 //

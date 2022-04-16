@@ -30,57 +30,57 @@ trait Articles[F[_]]:
 
 object Articles:
   import ArticlesSql.*
-  def make[F[_]: Concurrent](postgres: Resource[F, Resource[F, Session[F]]]): Articles[F] =
+  def make[F[_]: Concurrent](postgres: Resource[F, Session[F]]): Articles[F] =
     new Articles[F] {
-      override def findAllArticles: F[List[Article]] = postgres.use(_.use(_.execute(selectAll)))
+      override def findAllArticles: F[List[Article]] = postgres.use(_.execute(selectAll))
 
-      override def findArticleById(id: Id): F[Option[Article]] = postgres.use(_.use { session =>
+      override def findArticleById(id: Id): F[Option[Article]] = postgres.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
-      })
+      }
 
-      override def findArticleByUser(user: String): F[List[Article]] = postgres.use(_.use { session =>
+      override def findArticleByUser(user: String): F[List[Article]] = postgres.use { session =>
         session.prepare(selectByUser).use { ps =>
           ps.stream(user, 15).compile.toList
         }
-      })
+      }
 
-      override def findArticleByTag(tagName: TagName): F[List[Article]] = postgres.use(_.use { session =>
+      override def findArticleByTag(tagName: TagName): F[List[Article]] = postgres.use { session =>
         session.prepare(selectByTag).use { ps =>
           ps.stream(tagName, 15).compile.toList
         }
-      })
+      }
 
-      override def findArticleByTagAndUser(tagName: TagName, user: String): F[List[Article]] = postgres.use(_.use { session =>
+      override def findArticleByTagAndUser(tagName: TagName, user: String): F[List[Article]] = postgres.use { session =>
         session.prepare(selectByTagAndUser).use { ps =>
           ps.stream((tagName, user),15).compile.toList
         }
-      })
+      }
 
-      override def create(article: Article): F[Article] = postgres.use(_.use { session =>
+      override def create(article: Article): F[Article] = postgres.use { session =>
         session.prepare(insertArticle).use(_.execute(article)).as(article)
-      })
+      }
 
-      override def update(article: Article): F[Article] = postgres.use(_.use { session =>
+      override def update(article: Article): F[Article] = postgres.use { session =>
         session.prepare(updateArticle).use(_.execute(article)).as(article)
-      })
+      }
 
-      override def delete(blogId: Id): F[Option[Article]] = postgres.use(_.use { session =>
+      override def delete(blogId: Id): F[Option[Article]] = postgres.use { session =>
         session.prepare(deleteArticle).use(ps => ps.option(blogId))
-      })
+      }
 
-      override def addTag(tag: Tag): F[Tag] = postgres.use(_.use { session =>
+      override def addTag(tag: Tag): F[Tag] = postgres.use { session =>
         session.prepare(insertTag).use(_.execute(tag)).as(tag)
-      })
+      }
 
-      override def likeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use(_.use { session =>
+      override def likeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use { session =>
         session.prepare(insertLikeMap).use(_.execute(articleId, userId)).void
-      })
+      }
 
-      override def unlikeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use(_.use { session =>
+      override def unlikeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use { session =>
         session.prepare(deleteLikeMap).use(_.execute(articleId, userId)).void
-      })
+      }
     }
 
 private object ArticlesSql:

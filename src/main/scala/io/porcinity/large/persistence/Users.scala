@@ -25,47 +25,47 @@ trait Users[F[_]]:
 
 object Users:
   import UsersSql.*
-  def make[F[_]: Concurrent](pg: Resource[F, Resource[F, Session[F]]]): Users[F] =
+  def make[F[_]: Concurrent](pg: Resource[F, Session[F]]): Users[F] =
     new Users[F] {
-      override def findAllUsers: F[List[User]] = pg.use(_.use(_.execute(selectAll)))
+      override def findAllUsers: F[List[User]] = pg.use(_.execute(selectAll))
 
-      override def findUserById(id: UserId): F[Option[User]] = pg.use(_.use { session =>
+      override def findUserById(id: UserId): F[Option[User]] = pg.use { session =>
         session.prepare(selectById).use { ps =>
           ps.option(id)
         }
-      })
+      }
 
-      override def create(user: User): F[User] = pg.use(_.use { session =>
+      override def create(user: User): F[User] = pg.use { session =>
         session.prepare(insertUser).use(_.execute(user)).as(user)
-      })
+      }
 
-      override def update(user: User): F[User] = pg.use(_.use { session =>
+      override def update(user: User): F[User] = pg.use { session =>
         session.prepare(updateUser).use(_.execute(user)).as(user)
-      })
+      }
 
-      override def delete(userId: UserId): F[Option[User]] = pg.use(_.use { session =>
+      override def delete(userId: UserId): F[Option[User]] = pg.use { session =>
         session.prepare(deleteUser).use(ps => ps.option(userId))
-      })
+      }
 
-      override def followUser(userId: UserId, followerId: UserId): F[Unit] = pg.use(_.use { session =>
+      override def followUser(userId: UserId, followerId: UserId): F[Unit] = pg.use { session =>
         session.prepare(insertFollowMap).use(_.execute(userId, followerId)).void
-      })
+      }
 
-      override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] = pg.use(_.use { session =>
+      override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] = pg.use { session =>
         session.prepare(deleteFollowMap).use(_.execute(userId, followerId)).void
-      })
+      }
 
-      override def findFollowers(userId: UserId): F[List[UserId]] = pg.use(_.use { session =>
+      override def findFollowers(userId: UserId): F[List[UserId]] = pg.use { session =>
         session.prepare(findFollowersMap).use { ps =>
           ps.stream(userId, 100).compile.toList
         }
-      })
+      }
 
-      override def findFollowing(userId: UserId): F[List[UserId]] = pg.use(_.use { session =>
+      override def findFollowing(userId: UserId): F[List[UserId]] = pg.use { session =>
         session.prepare(findFollowingMap).use { ps =>
           ps.stream(userId, 100).compile.toList
         }
-      })
+      }
     }
 
 private object UsersSql:

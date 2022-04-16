@@ -12,27 +12,20 @@ import com.comcast.ip4s.{ipv4, port}
 
 object Main extends IOApp :
   override def run(args: List[String]): IO[ExitCode] =
+    val session = Session.single[IO](
+      host = "localhost",
+      port = 5432,
+      user = "pigg",
+      password = Some("test"),
+      database = "Large"
+    )
 
-    val session: Resource[IO, Resource[IO, Session[IO]]] =
-      Session.pooled[IO](
-        host = "localhost",
-        port = 5432,
-        user = "pigg",
-        password = Some("test"),
-        database = "Large",
-        max = 10
-      )
+    val userRepo = Users.make[IO](session)
+    val articleRepo = Articles.make[IO](session)
+    val tagsRepo = Tags.make[IO](session)
 
-    val usersRepo: Users[IO] = Users.make(session)
-
-    val articlesRepo: Articles[IO] = Articles.make(session)
-
-    val tagsRepo: Tags[IO] = Tags.make(session)
-
-    val articleService: ArticlesRoutes[IO] = new ArticlesRoutes(articlesRepo)
-
-    val userService: UsersRoutes[IO] = new UsersRoutes(usersRepo, articlesRepo)
-
+    val articleService: ArticlesRoutes[IO] = new ArticlesRoutes[IO](articleRepo)
+    val userService: UsersRoutes[IO] = new UsersRoutes[IO](userRepo, articleRepo)
     val tagsService: TagsRoutes[IO] = new TagsRoutes[IO](tagsRepo)
 
     val httpApp = Router(
@@ -43,7 +36,7 @@ object Main extends IOApp :
 
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
-    for
+    for {
       server <- EmberServerBuilder
         .default[IO]
         .withHost(ipv4"0.0.0.0")
@@ -52,4 +45,4 @@ object Main extends IOApp :
         .build
         .use(_ => IO.never)
         .as(ExitCode.Success)
-    yield server
+    } yield server
