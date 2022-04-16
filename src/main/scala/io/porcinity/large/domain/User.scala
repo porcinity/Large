@@ -29,9 +29,9 @@ object User:
     implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
     implicit val listIdsCodec: Codec[GetItems[UserId]] = deriveCodec
 
-  case class FollowUserDto(asUser: UserId)
-  case class UserDto(name: String, bio: String, email: String)
-  case class User(
+  final case class FollowUserDto(asUser: UserId)
+  final case class UserDto(name: String, bio: String, email: String)
+  final case class User(
                    id: UserId,
                    name: Username,
                    bio: Biography,
@@ -77,7 +77,7 @@ object User:
       case Unverified => "Unverified"
     def init: Either[String, EmailStatus] = Right(Unverified)
 
-  case class Email(address: EmailAddress, status: EmailStatus)
+  final case class Email(address: EmailAddress, status: EmailStatus)
 
   opaque type JoinDate = LocalDate
 

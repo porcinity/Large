@@ -25,7 +25,7 @@ object Article:
   implicit val getItemsCodec: Codec[GetItems[Article]] = deriveCodec
   implicit val likeArticleCodec: Codec[LikeArticleDto] = deriveCodec
 
-  case class Article(
+  final case class Article(
                       id: Id,
                       title: Title,
                       content: Content,
@@ -88,8 +88,8 @@ object Article:
       Right(LocalDate.now())
     extension (x: ArticleDate) def value: LocalDate = x
 
-  case class ArticleDto(title: String, content: String, visibility: String)
-  case class LikeArticleDto(asUser: User.UserId)
+  final case class ArticleDto(title: String, content: String, visibility: String)
+  final case class LikeArticleDto(asUser: User.UserId)
 
   object ArticleDto:
     implicit val articleDtoCodec: Codec[ArticleDto] = deriveCodec
