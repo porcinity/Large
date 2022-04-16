@@ -1,4 +1,4 @@
-package models
+package io.porcinity.large.domain
 
 import doobie.{Read, Write}
 import io.circe.Codec
@@ -9,12 +9,12 @@ import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
 import cats.data.*
 import cats.implicits.*
-import common.{GetItem, GetItems}
 import eu.timepit.refined.api.RefinedTypeOps
 import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.numeric.{NonNegInt, PosDouble, PosFloat, PosInt, PosLong}
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
+import io.porcinity.large.common.{GetItem, GetItems}
 import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 

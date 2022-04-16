@@ -1,7 +1,7 @@
-package models
+package io.porcinity.large.domain
 
 import cats.data.NonEmptyChain
-import models.Article.Id
+import Article.Id
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 import com.aventrix.jnanoid.jnanoid.*
@@ -10,7 +10,7 @@ import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 import cats.syntax.all.*
-import common.*
+import io.porcinity.large.common.{GetItem, GetItems}
 
 object Tag {
   implicit val tagCodec: Codec[Tag] = deriveCodec

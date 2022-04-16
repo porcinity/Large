@@ -1,18 +1,16 @@
-import cats.effect.{ExitCode, IO, IOApp, Resource}
-import org.http4s.HttpRoutes
-import org.http4s.ember.server.*
-import org.http4s.implicits.*
-import org.http4s.syntax.all.*
-import org.http4s.server.Router
-import repositories.{Articles, Tags, Users}
-import routes.{ArticlesRoutes, TagsRoutes, UsersRoutes}
-import com.comcast.ip4s.{ipv4, port}
-import skunk.*
-import skunk.implicits.*
-import natchez.Trace.Implicits.noop
-import org.http4s.server.middleware.Logger
+package io.porcinity.large.api
 
-object Main extends IOApp:
+import cats.effect.{ExitCode, IO, IOApp, Resource}
+import com.comcast.ip4s.Literals.ipv4
+import io.porcinity.large.persistence.{Articles, Tags, Users}
+import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.Router
+import org.http4s.server.middleware.Logger
+import skunk.Session
+import natchez.Trace.Implicits.noop
+import com.comcast.ip4s.{ipv4, port}
+
+object Main extends IOApp :
   override def run(args: List[String]): IO[ExitCode] =
 
     val session: Resource[IO, Resource[IO, Session[IO]]] =

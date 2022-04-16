@@ -1,8 +1,7 @@
-package repositories
-
+package io.porcinity.large.persistence
 
 import cats.effect.{Concurrent, MonadCancelThrow, Resource}
-import models.User.*
+import io.porcinity.large.domain.User.*
 import Codecs.*
 import skunk.*
 import skunk.implicits.*
@@ -11,7 +10,7 @@ import skunk.codec.numeric.*
 import skunk.codec.temporal.*
 import skunk.data.Arr
 import cats.syntax.all.*
-import models.User.MembershipTier.makeString
+import io.porcinity.large.domain.User.MembershipTier.makeString
 
 trait Users[F[_]]:
   def findAllUsers: F[List[User]]
@@ -70,7 +69,7 @@ object Users:
     }
 
 private object UsersSql:
-  import repositories.Codecs.*
+  import io.porcinity.large.persistence.Codecs.*
 
   val codec: Codec[User] =
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date ~ _varchar).imap {

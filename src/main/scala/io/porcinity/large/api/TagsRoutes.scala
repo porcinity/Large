@@ -1,12 +1,11 @@
-package routes
+package io.porcinity.large.api
 
 import cats.Monad
 import cats.effect.Concurrent
-import models.Tag.*
-import models.Tag.TagDto.*
+import io.porcinity.large.domain.Tag.*
+import io.porcinity.large.domain.Tag.TagDto.*
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-import repositories.Tags
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.*
@@ -18,7 +17,8 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-import common.*
+import io.porcinity.large.common.GetItems
+import io.porcinity.large.persistence.Tags
 
 class TagsRoutes[F[_]: Concurrent](repository: Tags[F]) extends Http4sDsl[F]:
 

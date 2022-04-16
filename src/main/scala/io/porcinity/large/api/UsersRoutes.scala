@@ -1,4 +1,4 @@
-package routes
+package io.porcinity.large.api
 
 import cats.effect.kernel.Outcome.{Errored, Succeeded}
 import cats.effect.{Async, Concurrent, Deferred, Resource, Sync, Temporal}
@@ -9,20 +9,20 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
 import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
-import repositories.{Articles, Users}
-import models.User.Codecs.*
-import models.User.*
+import io.porcinity.large.domain.User.Codecs.*
+import io.porcinity.large.domain.User.*
 import cats.Monad
 import cats.implicits.*
 import cats.data.Validated.Valid
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
-import models.Article.ArticleDto
+import io.porcinity.large.domain.Article.ArticleDto
 import io.circe.syntax.*
 import monocle.syntax.all.*
 import monocle.refined.all.*
 import UpdateUser.GenericDerivation.*
-import common.*
+import io.porcinity.large.common.{GetItem, GetItems}
+import io.porcinity.large.persistence.{Articles, Users}
 
 class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: Articles[F]) extends Http4sDsl[F] {
 

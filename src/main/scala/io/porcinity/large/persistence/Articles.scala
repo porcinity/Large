@@ -1,17 +1,17 @@
-package repositories
+package io.porcinity.large.persistence
 
 import cats.effect.{Concurrent, Resource}
-import models.Tag.*
-import models.Article.*
+import io.porcinity.large.domain.Tag.*
+import io.porcinity.large.domain.Article.*
 import Codecs.*
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.text.*
 import skunk.codec.temporal.*
 import cats.syntax.all.*
-import models.Article.Visibility.makeString
+import io.porcinity.large.domain.Article.Visibility.makeString
 import skunk.codec.all.int8
-import models.User.UserId
+import io.porcinity.large.domain.User.UserId
 
 import java.time.LocalDate
 

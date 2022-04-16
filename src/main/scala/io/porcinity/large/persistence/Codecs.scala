@@ -1,9 +1,9 @@
-package repositories
+package io.porcinity.large.persistence
 
-import models.Article
-import models.Article.Author
-import models.Tag.TagName
-import models.User.UserId
+import io.porcinity.large.domain.Article
+import Article.Author
+import io.porcinity.large.domain.Tag.TagName
+import io.porcinity.large.domain.User.UserId
 import skunk.Codec
 import skunk.codec.text.varchar
 

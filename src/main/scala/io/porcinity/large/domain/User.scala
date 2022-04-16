@@ -1,4 +1,4 @@
-package models
+package io.porcinity.large.domain
 
 import doobie.{Read, Write}
 import io.circe.{Codec, Decoder, Encoder}
@@ -16,7 +16,7 @@ import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.{NonEmptyFiniteString, NonEmptyString}
 import org.latestbit.circe.adt.codec.*
 import io.circe.refined._
-import common.{GetItem, GetItems}
+import io.porcinity.large.common.{GetItem, GetItems}
 
 object User:
 

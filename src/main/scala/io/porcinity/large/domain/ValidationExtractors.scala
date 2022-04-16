@@ -1,4 +1,4 @@
-package models
+package io.porcinity.large.domain
 
 object ValidationExtractors:
 

@@ -1,11 +1,12 @@
-package routes
+package io.porcinity.large.api
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.Monad
-import common.*
-import models.Article.*
-import models.Tag.{TagDto, TagName}
-import models.User
+import io.porcinity.large.common.{GetItem, GetItems}
+import io.porcinity.large.domain.Article.*
+import io.porcinity.large.domain.User
+import io.porcinity.large.domain.Tag.{TagDto, TagName}
+import io.porcinity.large.persistence.Articles
 import org.http4s.*
 import org.http4s.Status.{Created, NoContent, NotFound, Ok, UnprocessableEntity}
 import org.http4s.circe.*
@@ -13,7 +14,6 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import repositories.Articles
 
 // These are necessary to use for-comprehensions on F
 import cats.syntax.flatMap.*

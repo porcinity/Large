@@ -1,8 +1,8 @@
-package repositories
+package io.porcinity.large.persistence
 
 import cats.effect.{Concurrent, Resource}
-import models.Tag.{Tag, TagName}
-import repositories.Codecs.tagName
+import io.porcinity.large.domain.Tag.{Tag, TagName}
+import Codecs.tagName
 import skunk.codec.text.varchar
 import skunk.{Codec, Command, Decoder, Query, Session, Void}
 import skunk.implicits.*

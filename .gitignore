@@ -1,6 +1,6 @@
 .idea
 target
-/src/main/scala/mail
+/src/main/scala/io/porcinity/large/common/mail
 .bloop
 .metals
 .vscode
