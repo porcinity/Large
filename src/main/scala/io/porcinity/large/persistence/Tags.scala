@@ -18,7 +18,8 @@ object Tags:
   import TagsSql.*
   def make[F[_]: Concurrent](postgres: Resource[F, Session[F]]): Tags[F] =
     new Tags[F] {
-      override def findAllTags: F[List[TagName]] = postgres.use(_.execute(selectAll))
+      override def findAllTags: F[List[TagName]] =
+        postgres.use(_.execute(selectAll))
 
       override def createTag(name: String): F[Unit] = postgres.use { session =>
         session.prepare(insert).use(_.execute(TagName.unsafeFrom(name))).void

@@ -29,10 +29,11 @@ object Users:
     new Users[F] {
       override def findAllUsers: F[List[User]] = pg.use(_.execute(selectAll))
 
-      override def findUserById(id: UserId): F[Option[User]] = pg.use { session =>
-        session.prepare(selectById).use { ps =>
-          ps.option(id)
-        }
+      override def findUserById(id: UserId): F[Option[User]] = pg.use {
+        session =>
+          session.prepare(selectById).use { ps =>
+            ps.option(id)
+          }
       }
 
       override def create(user: User): F[User] = pg.use { session =>
@@ -47,24 +48,34 @@ object Users:
         session.prepare(deleteUser).use(ps => ps.option(userId))
       }
 
-      override def followUser(userId: UserId, followerId: UserId): F[Unit] = pg.use { session =>
-        session.prepare(insertFollowMap).use(_.execute(userId, followerId)).void
-      }
-
-      override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] = pg.use { session =>
-        session.prepare(deleteFollowMap).use(_.execute(userId, followerId)).void
-      }
-
-      override def findFollowers(userId: UserId): F[List[UserId]] = pg.use { session =>
-        session.prepare(findFollowersMap).use { ps =>
-          ps.stream(userId, 100).compile.toList
+      override def followUser(userId: UserId, followerId: UserId): F[Unit] =
+        pg.use { session =>
+          session
+            .prepare(insertFollowMap)
+            .use(_.execute(userId, followerId))
+            .void
         }
+
+      override def unfollowUser(userId: UserId, followerId: UserId): F[Unit] =
+        pg.use { session =>
+          session
+            .prepare(deleteFollowMap)
+            .use(_.execute(userId, followerId))
+            .void
+        }
+
+      override def findFollowers(userId: UserId): F[List[UserId]] = pg.use {
+        session =>
+          session.prepare(findFollowersMap).use { ps =>
+            ps.stream(userId, 100).compile.toList
+          }
       }
 
-      override def findFollowing(userId: UserId): F[List[UserId]] = pg.use { session =>
-        session.prepare(findFollowingMap).use { ps =>
-          ps.stream(userId, 100).compile.toList
-        }
+      override def findFollowing(userId: UserId): F[List[UserId]] = pg.use {
+        session =>
+          session.prepare(findFollowingMap).use { ps =>
+            ps.stream(userId, 100).compile.toList
+          }
       }
     }
 
@@ -72,29 +83,36 @@ private object UsersSql:
   import io.porcinity.large.persistence.Codecs.*
 
   val codec: Codec[User] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date ~ _varchar).imap {
-      case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d ~ list => User(
-        UserId.unsafeFrom(i),
-        Username.unsafeFrom(n),
-        Biography.unsafeFrom(b),
-        Email(
-          EmailAddress.unsafeFrom(a),
-          EmailStatus.fromString(s)
-        ),
-        MembershipTier.fromString(t),
-        Followers.unsafeFrom(followers.toInt),
-        Following.unsafeFrom(following.toInt),
-        Liked.unsafeFrom(l.toInt),
-        JoinDate(d),
-        list.toList
+    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ int8 ~ int8 ~ int8 ~ date ~ _varchar)
+      .imap {
+        case i ~ n ~ b ~ a ~ s ~ t ~ followers ~ following ~ l ~ d ~ list =>
+          User(
+            UserId.unsafeFrom(i),
+            Username.unsafeFrom(n),
+            Biography.unsafeFrom(b),
+            Email(
+              EmailAddress.unsafeFrom(a),
+              EmailStatus.fromString(s)
+            ),
+            MembershipTier.fromString(t),
+            Followers.unsafeFrom(followers.toInt),
+            Following.unsafeFrom(following.toInt),
+            Liked.unsafeFrom(l.toInt),
+            JoinDate(d),
+            list.toList
+          )
+      }(u =>
+        u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
+          EmailStatus.makeString(u.email.status) ~ makeString(
+            u.tier
+          ) ~ u.followers.value.toLong ~ u.following.value.toLong ~
+          u.likedArticles.value.toLong ~ u.joinDate.value ~ Arr.fromFoldable(
+            u.articles
+          )
       )
-    } (u =>
-      u.id.value ~ u.name.value ~ u.bio.value ~ u.email.address.value ~
-        EmailStatus.makeString(u.email.status) ~ makeString(u.tier) ~ u.followers.value.toLong ~ u.following.value.toLong ~
-        u.likedArticles.value.toLong ~ u.joinDate.value ~ Arr.fromFoldable(u.articles))
 
   val selectAll: Query[Void, User] =
-   sql"""
+    sql"""
     select u.user_id, u.username, u.user_bio, u.user_email_address, u.user_email_status, u.user_tier,
        (select count(*) from follows_map f where f.user_id = u.user_id) as followers,
        (select count(*) from follows_map f where f.follower_id = u.user_id) as following,
@@ -125,10 +143,12 @@ private object UsersSql:
     sql"""
         insert into users(user_id, username, user_email_address, user_email_status, user_tier, user_join_date, user_bio)
         values ($varchar, $varchar, $varchar, $varchar, $varchar, $date, $varchar)
-        """
-      .command
+        """.command
       .contramap { case User(id, name, bio, email, tier, _, _, _, j, _) =>
-      id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ makeString(tier) ~ j.value ~ bio.value}
+        id.value ~ name.value ~ email.address.value ~ EmailStatus.makeString(
+          email.status
+        ) ~ makeString(tier) ~ j.value ~ bio.value
+      }
 
   val updateUser: Command[User] =
     sql"""
@@ -138,7 +158,10 @@ private object UsersSql:
             user_email_status = $varchar
         where user_id = $varchar
     """.command.contramap { case User(id, name, _, email, _, _, _, _, _, _) =>
-      name.value ~ email.address.value ~ EmailStatus.makeString(email.status) ~ id.value}
+      name.value ~ email.address.value ~ EmailStatus.makeString(
+        email.status
+      ) ~ id.value
+    }
 
   val deleteUser: Query[UserId, User] =
     sql"""

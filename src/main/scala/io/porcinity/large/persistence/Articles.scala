@@ -32,83 +32,114 @@ object Articles:
   import ArticlesSql.*
   def make[F[_]: Concurrent](postgres: Resource[F, Session[F]]): Articles[F] =
     new Articles[F] {
-      override def findAllArticles: F[List[Article]] = postgres.use(_.execute(selectAll))
+      override def findAllArticles: F[List[Article]] =
+        postgres.use(_.execute(selectAll))
 
-      override def findArticleById(id: Id): F[Option[Article]] = postgres.use { session =>
-        session.prepare(selectById).use { ps =>
-          ps.option(id)
-        }
+      override def findArticleById(id: Id): F[Option[Article]] = postgres.use {
+        session =>
+          session.prepare(selectById).use { ps =>
+            ps.option(id)
+          }
       }
 
-      override def findArticleByUser(user: String): F[List[Article]] = postgres.use { session =>
-        session.prepare(selectByUser).use { ps =>
-          ps.stream(user, 15).compile.toList
+      override def findArticleByUser(user: String): F[List[Article]] =
+        postgres.use { session =>
+          session.prepare(selectByUser).use { ps =>
+            ps.stream(user, 15).compile.toList
+          }
         }
-      }
 
-      override def findArticleByTag(tagName: TagName): F[List[Article]] = postgres.use { session =>
-        session.prepare(selectByTag).use { ps =>
-          ps.stream(tagName, 15).compile.toList
+      override def findArticleByTag(tagName: TagName): F[List[Article]] =
+        postgres.use { session =>
+          session.prepare(selectByTag).use { ps =>
+            ps.stream(tagName, 15).compile.toList
+          }
         }
-      }
 
-      override def findArticleByTagAndUser(tagName: TagName, user: String): F[List[Article]] = postgres.use { session =>
+      override def findArticleByTagAndUser(
+          tagName: TagName,
+          user: String
+      ): F[List[Article]] = postgres.use { session =>
         session.prepare(selectByTagAndUser).use { ps =>
-          ps.stream((tagName, user),15).compile.toList
+          ps.stream((tagName, user), 15).compile.toList
         }
       }
 
-      override def create(article: Article): F[Article] = postgres.use { session =>
-        session.prepare(insertArticle).use(_.execute(article)).as(article)
+      override def create(article: Article): F[Article] = postgres.use {
+        session =>
+          session.prepare(insertArticle).use(_.execute(article)).as(article)
       }
 
-      override def update(article: Article): F[Article] = postgres.use { session =>
-        session.prepare(updateArticle).use(_.execute(article)).as(article)
+      override def update(article: Article): F[Article] = postgres.use {
+        session =>
+          session.prepare(updateArticle).use(_.execute(article)).as(article)
       }
 
-      override def delete(blogId: Id): F[Option[Article]] = postgres.use { session =>
-        session.prepare(deleteArticle).use(ps => ps.option(blogId))
+      override def delete(blogId: Id): F[Option[Article]] = postgres.use {
+        session =>
+          session.prepare(deleteArticle).use(ps => ps.option(blogId))
       }
 
       override def addTag(tag: Tag): F[Tag] = postgres.use { session =>
         session.prepare(insertTag).use(_.execute(tag)).as(tag)
       }
 
-      override def likeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use { session =>
-        session.prepare(insertLikeMap).use(_.execute(articleId, userId)).void
-      }
+      override def likeArticle(articleId: Id, userId: UserId): F[Unit] =
+        postgres.use { session =>
+          session.prepare(insertLikeMap).use(_.execute(articleId, userId)).void
+        }
 
-      override def unlikeArticle(articleId: Id, userId: UserId): F[Unit] = postgres.use { session =>
-        session.prepare(deleteLikeMap).use(_.execute(articleId, userId)).void
-      }
+      override def unlikeArticle(articleId: Id, userId: UserId): F[Unit] =
+        postgres.use { session =>
+          session.prepare(deleteLikeMap).use(_.execute(articleId, userId)).void
+        }
     }
 
 private object ArticlesSql:
   val decoder: Decoder[Article] =
-    ( articleId ~ varchar ~ varchar ~ articleAuthorId ~ int8 ~ varchar ~ date ~ date ~ _varchar ).map {
-      case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit ~ tags =>
-        Article(
-          nId,
-          Title.unsafeFrom(title),
-          Content.unsafeFrom(content),
-          aId,
-          WordCount.unsafeFrom(content.split(" ").length),
-          ReadingTime.unsafeFrom(content.split(" ").length / 200.0),
-          Likes.unsafeFrom(likes.toInt),
-          Visibility.unsafeFromString(vis),
-          ArticleDate(publish),
-          ArticleDate(edit),
-          tags.toList
-        )
-    }
+    (articleId ~ varchar ~ varchar ~ articleAuthorId ~ int8 ~ varchar ~ date ~ date ~ _varchar)
+      .map {
+        case nId ~ title ~ content ~ aId ~ likes ~ vis ~ publish ~ edit ~ tags =>
+          Article(
+            nId,
+            Title.unsafeFrom(title),
+            Content.unsafeFrom(content),
+            aId,
+            WordCount.unsafeFrom(content.split(" ").length),
+            ReadingTime.unsafeFrom(content.split(" ").length / 200.0),
+            Likes.unsafeFrom(likes.toInt),
+            Visibility.unsafeFromString(vis),
+            ArticleDate(publish),
+            ArticleDate(edit),
+            tags.toList
+          )
+      }
 
   val encoder: Encoder[Article] =
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ date ~ date)
-      .contramap { case Article(id, title, content, author, _, _, _, visibility, publish, edit, _) =>
-      id.value ~ title.value ~ content.value ~ author.value ~ makeString(visibility) ~ publish.value ~ edit.value }
+      .contramap {
+        case Article(
+              id,
+              title,
+              content,
+              author,
+              _,
+              _,
+              _,
+              visibility,
+              publish,
+              edit,
+              _
+            ) =>
+          id.value ~ title.value ~ content.value ~ author.value ~ makeString(
+            visibility
+          ) ~ publish.value ~ edit.value
+      }
 
   val tagEncoder: Encoder[Tag] =
-    ( varchar ~ varchar ~ varchar).contramap { t => t.id.value ~ t.name.value ~ t.articleId.value }
+    (varchar ~ varchar ~ varchar).contramap { t =>
+      t.id.value ~ t.name.value ~ t.articleId.value
+    }
 
   val selectAll: Query[Void, Article] =
     sql"""
@@ -157,8 +188,9 @@ private object ArticlesSql:
             article_visibility = $varchar,
             article_last_edit_date = $date
         where article_id = $articleId
-    """.command.contramap { case Article(id, title, content, _, _, _, _, vis, _, _, _) =>
-      title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
+    """.command.contramap {
+      case Article(id, title, content, _, _, _, _, vis, _, _, _) =>
+        title.value ~ content.value ~ vis.toString ~ LocalDate.now ~ id
     }
 
   val deleteArticle: Query[Id, Article] =
@@ -171,7 +203,7 @@ private object ArticlesSql:
         insert into tag_map
         values ($tagEncoder)
     """.command
-    
+
   val selectByUser: Query[String, Article] =
     sql"""
         select * from articles
@@ -200,7 +232,7 @@ private object ArticlesSql:
         insert into likes_map (like_article, like_user)
         values ($articleId, $userId)
          """.command
-    
+
   val deleteLikeMap: Command[Id ~ UserId] =
     sql"""
         delete from likes_map
