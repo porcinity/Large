@@ -25,7 +25,7 @@ object User:
     implicit val GetItemCodec: Codec[GetItem[User]] = deriveCodec
     implicit val GetItemsCodec: Codec[GetItems[User]] = deriveCodec
     implicit val dtoCodec: Codec[UserDto] = deriveCodec
-    implicit val userCodec: Codec[User] = deriveCodec
+//    implicit val userCodec: Codec[User] = deriveCodec
     implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
     implicit val listIdsCodec: Codec[GetItems[UserId]] = deriveCodec
 
@@ -42,7 +42,7 @@ object User:
                    likedArticles: Liked,
                    joinDate: JoinDate,
                    articles: Articles
-                 )
+                 ) derives Codec.AsObject
 
   type Articles = List[String]
   object Articles:
