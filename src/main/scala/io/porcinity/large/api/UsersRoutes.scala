@@ -8,7 +8,14 @@ import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.Status.{BadRequest, Created, NoContent, NotFound, Ok, UnprocessableEntity}
+import org.http4s.Status.{
+  BadRequest,
+  Created,
+  NoContent,
+  NotFound,
+  Ok,
+  UnprocessableEntity
+}
 import io.porcinity.large.domain.User.Codecs.*
 import io.porcinity.large.domain.User.*
 import cats.Monad
@@ -24,7 +31,10 @@ import UpdateUser.GenericDerivation.*
 import io.porcinity.large.common.{GetItem, GetItems}
 import io.porcinity.large.persistence.{Articles, Users}
 
-class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: Articles[F]) extends Http4sDsl[F] {
+class UsersRoutes[F[_]: JsonDecoder: Monad](
+    repository: Users[F],
+    articleRepo: Articles[F]
+) extends Http4sDsl[F] {
 
   object UserIdVar:
     def unapply(str: String): Option[UserId] = Some(UserId.unsafeFrom(str))
@@ -47,8 +57,10 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: A
       for {
         dto <- req.asJsonDecode[UserDto]
         u <- UserDto.toDomain(dto).pure[F]
-        res <- u.fold(e => UnprocessableEntity(GetItems(e.toList)),
-                  x => Ok(repository.create(x).map(GetItem.apply)))
+        res <- u.fold(
+          e => UnprocessableEntity(GetItems(e.toList)),
+          x => Ok(repository.create(x).map(GetItem.apply))
+        )
       } yield res
 
     case GET -> Root / UserIdVar(id) / "verify" =>
@@ -86,8 +98,10 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: A
       for {
         dto <- req.asJsonDecode[ArticleDto]
         article <- ArticleDto.toDomain(dto, id).pure[F]
-        res <- article.fold(UnprocessableEntity(_), b =>
-          Created(articleRepo.create(b).map(GetItem.apply)))
+        res <- article.fold(
+          UnprocessableEntity(_),
+          b => Created(articleRepo.create(b).map(GetItem.apply))
+        )
       } yield res
 
     case req @ PUT -> Root / UserIdVar(id) =>
@@ -96,7 +110,10 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](repository: Users[F], articleRepo: A
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
           val up = UpdateUser.of(dto, u)
-          up.fold(UnprocessableEntity(_), u => Created(repository.update(u).map(GetItem.apply)))
+          up.fold(
+            UnprocessableEntity(_),
+            u => Created(repository.update(u).map(GetItem.apply))
+          )
         })
       } yield res
 

@@ -10,7 +10,7 @@ import skunk.Session
 import natchez.Trace.Implicits.noop
 import com.comcast.ip4s.{ipv4, port}
 
-object Main extends IOApp :
+object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     val session = Session.single[IO](
       host = "localhost",
@@ -25,7 +25,8 @@ object Main extends IOApp :
     val tagsRepo = Tags.make[IO](session)
 
     val articleService: ArticlesRoutes[IO] = new ArticlesRoutes[IO](articleRepo)
-    val userService: UsersRoutes[IO] = new UsersRoutes[IO](userRepo, articleRepo)
+    val userService: UsersRoutes[IO] =
+      new UsersRoutes[IO](userRepo, articleRepo)
     val tagsService: TagsRoutes[IO] = new TagsRoutes[IO](tagsRepo)
 
     val httpApp = Router(

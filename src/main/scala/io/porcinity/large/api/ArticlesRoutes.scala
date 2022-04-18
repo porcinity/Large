@@ -21,7 +21,8 @@ import cats.syntax.functor.*
 import cats.implicits.*
 
 // The type constraint of Concurrent is necessary to decode Json
-class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends Http4sDsl[F] {
+class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F])
+    extends Http4sDsl[F] {
 
   implicit val tagCoder: QueryParamDecoder[TagName] =
     QueryParamDecoder[String].map(TagName.unsafeFrom)
@@ -32,18 +33,24 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
   object ArticleIdVar:
     def unapply(str: String): Option[Id] = Some(Id.unsafeFrom(str))
 
-  object UserIdParamMatcher extends QueryParamDecoderMatcher[User.UserId]("asUser")
-  object OptionalTagQueryParamMatcher extends  OptionalQueryParamDecoderMatcher[TagName]("tag")
-  object OptionalUserIdParamMatch extends OptionalQueryParamDecoderMatcher[String]("user")
+  object UserIdParamMatcher
+      extends QueryParamDecoderMatcher[User.UserId]("asUser")
+  object OptionalTagQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[TagName]("tag")
+  object OptionalUserIdParamMatch
+      extends OptionalQueryParamDecoderMatcher[String]("user")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
-    case GET -> Root :? OptionalTagQueryParamMatcher(tag) +& OptionalUserIdParamMatch(user) => (tag, user) match {
-      case (Some(t), Some(u)) => Ok(repository.findArticleByTagAndUser(t, u))
-      case (Some(t), None) => Ok(repository.findArticleByTag(t))
-      case (None, Some(u)) => Ok(repository.findArticleByUser(u))
-      case (None, None) => Ok(repository.findAllArticles.map(GetItems.apply))
-    }
+    case GET -> Root :? OptionalTagQueryParamMatcher(
+          tag
+        ) +& OptionalUserIdParamMatch(user) =>
+      (tag, user) match {
+        case (Some(t), Some(u)) => Ok(repository.findArticleByTagAndUser(t, u))
+        case (Some(t), None)    => Ok(repository.findArticleByTag(t))
+        case (None, Some(u))    => Ok(repository.findArticleByUser(u))
+        case (None, None) => Ok(repository.findAllArticles.map(GetItems.apply))
+      }
 
     case GET -> Root / ArticleIdVar(id) =>
       for {
@@ -76,17 +83,21 @@ class ArticlesRoutes[F[_]: JsonDecoder: Monad](repository: Articles[F]) extends 
         foundArticle <- repository.findArticleById(id)
         updateArticle = ArticleDto.toDomain(dto, user)
         res <- (foundArticle, updateArticle) match
-          case (None, _) => NotFound()
+          case (None, _)    => NotFound()
           case (_, Left(e)) => UnprocessableEntity(e)
           case (Some(b), Right(u)) =>
-            val newArticle = b.copy(title = u.title, content = u.content, visibility = u.visibility)
+            val newArticle = b.copy(
+              title = u.title,
+              content = u.content,
+              visibility = u.visibility
+            )
             Created(repository.update(newArticle).map(GetItem.apply))
       } yield res
 
     case DELETE -> Root / ArticleIdVar(id) =>
       for {
         res <- repository.delete(id)
-        y <- res.fold(NotFound())( _ => NoContent())
+        y <- res.fold(NotFound())(_ => NoContent())
       } yield y
   }
 }
