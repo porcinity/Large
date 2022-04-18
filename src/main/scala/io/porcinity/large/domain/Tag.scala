@@ -20,20 +20,29 @@ object Tag {
   final case class Tag(id: TagId, name: TagName, articleId: TaggedArticle)
 
   type TagId = NonEmptyString
-  object TagId extends RefinedTypeOps[TagId, String] with CatsRefinedTypeOpsSyntax
+  object TagId
+      extends RefinedTypeOps[TagId, String]
+      with CatsRefinedTypeOpsSyntax
 
   type TagName = NonEmptyString
-  object TagName extends RefinedTypeOps[TagName, String] with CatsRefinedTypeOpsSyntax
+  object TagName
+      extends RefinedTypeOps[TagName, String]
+      with CatsRefinedTypeOpsSyntax
 
   type TaggedArticle = NonEmptyString
-  object TaggedArticle extends RefinedTypeOps[TaggedArticle, String] with CatsRefinedTypeOpsSyntax
+  object TaggedArticle
+      extends RefinedTypeOps[TaggedArticle, String]
+      with CatsRefinedTypeOpsSyntax
 
   final case class TagDto(name: String)
 
   object TagDto:
     implicit val tagDtoCodec: Codec[TagDto] = deriveCodec[TagDto]
 
-    def toDomain(dto: TagDto, id: Article.Id): Either[NonEmptyChain[String], Tag] =
+    def toDomain(
+        dto: TagDto,
+        id: Article.Id
+    ): Either[NonEmptyChain[String], Tag] =
       val tagId = NanoIdUtils.randomNanoId()
       (
         TagId.from(tagId).toEitherNec,
