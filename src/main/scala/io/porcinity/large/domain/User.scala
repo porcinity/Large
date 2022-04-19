@@ -21,48 +21,62 @@ import io.porcinity.large.common.{GetItem, GetItems}
 object User:
 
   object Codecs:
-    implicit val stringCodec: Codec[GetItems[String]] = deriveCodec
-    implicit val GetItemCodec: Codec[GetItem[User]] = deriveCodec
-    implicit val GetItemsCodec: Codec[GetItems[User]] = deriveCodec
-    implicit val dtoCodec: Codec[UserDto] = deriveCodec
-//    implicit val userCodec: Codec[User] = deriveCodec
+    implicit val stringCodec: Codec[GetItems[String]]     = deriveCodec
+    implicit val GetItemCodec: Codec[GetItem[User]]       = deriveCodec
+    implicit val GetItemsCodec: Codec[GetItems[User]]     = deriveCodec
+    implicit val dtoCodec: Codec[UserDto]                 = deriveCodec
     implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
-    implicit val listIdsCodec: Codec[GetItems[UserId]] = deriveCodec
+    implicit val listIdsCodec: Codec[GetItems[UserId]]    = deriveCodec
 
   final case class FollowUserDto(asUser: UserId)
   final case class UserDto(name: String, bio: String, email: String)
   final case class User(
-                   id: UserId,
-                   name: Username,
-                   bio: Biography,
-                   email: Email,
-                   tier: MembershipTier,
-                   followers: Followers,
-                   following: Following,
-                   likedArticles: Liked,
-                   joinDate: JoinDate,
-                   articles: Articles
-                 ) derives Codec.AsObject
+      id: UserId,
+      name: Username,
+      bio: Biography,
+      email: Email,
+      tier: MembershipTier,
+      followers: Followers,
+      following: Following,
+      likedArticles: Liked,
+      joinDate: JoinDate,
+      articles: Articles
+  ) derives Codec.AsObject
+  final case class AuthUser(id: UserId)
 
   type Articles = List[String]
   object Articles:
     def from(list: List[String]): Either[NonEmptyChain[String], Articles] =
       Right(list)
-      
+
   type UserId = NonEmptyFiniteString[30]
-  object UserId extends RefinedTypeOps[UserId, String] with CatsRefinedTypeOpsSyntax
+  object UserId
+      extends RefinedTypeOps[UserId, String]
+      with CatsRefinedTypeOpsSyntax
 
   type Username = NonEmptyFiniteString[15]
-  object Username extends RefinedTypeOps[Username, String] with CatsRefinedTypeOpsSyntax:
+  object Username
+      extends RefinedTypeOps[Username, String]
+      with CatsRefinedTypeOpsSyntax:
     def validate(input: String): Either[NonEmptyChain[String], Username] =
-      Username.from(input).leftMap(_ => "Username must be less than or equal to 15 chars.").toEitherNec
+      Username
+        .from(input)
+        .leftMap(_ => "Username must be less than or equal to 15 chars.")
+        .toEitherNec
 
-  type ValidEmail = Refined[String, MatchesRegex["""^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""]]
+  type ValidEmail = Refined[String, MatchesRegex[
+    """^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
+  ]]
 
   type EmailAddress = ValidEmail
-  object EmailAddress extends RefinedTypeOps[ValidEmail, String] with CatsRefinedTypeOpsSyntax:
+  object EmailAddress
+      extends RefinedTypeOps[ValidEmail, String]
+      with CatsRefinedTypeOpsSyntax:
     def validate(input: String): Either[NonEmptyChain[String], EmailAddress] =
-      EmailAddress.from(input).leftMap(_ => "Email must be in valid format.").toEitherNec
+      EmailAddress
+        .from(input)
+        .leftMap(_ => "Email must be in valid format.")
+        .toEitherNec
 
   enum EmailStatus derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
     case Verified
@@ -71,9 +85,9 @@ object User:
   object EmailStatus:
     def fromString(x: String): EmailStatus = x match
       case "Verified" => EmailStatus.Verified
-      case _ => EmailStatus.Unverified
+      case _          => EmailStatus.Unverified
     def makeString(vs: EmailStatus): String = vs match
-      case Verified => "Verified"
+      case Verified   => "Verified"
       case Unverified => "Unverified"
     def init: Either[String, EmailStatus] = Right(Unverified)
 
@@ -83,11 +97,13 @@ object User:
 
   object JoinDate:
     def apply(date: LocalDate): JoinDate = date
-    def create (date: LocalDate): EitherNec[String, LocalDate] = date match
+    def create(date: LocalDate): EitherNec[String, LocalDate] = date match
       case _ => Right(date)
-  extension (x: JoinDate) def value: LocalDate = x
+    extension (x: JoinDate) def value: LocalDate = x
 
-  enum MembershipTier derives JsonTaggedAdt.PureEncoder, JsonTaggedAdt.PureDecoder:
+  enum MembershipTier
+      derives JsonTaggedAdt.PureEncoder,
+        JsonTaggedAdt.PureDecoder:
     case Free
     case Trial
     case Premium
@@ -95,37 +111,47 @@ object User:
   object MembershipTier:
     val init: Either[NonEmptyChain[String], MembershipTier] = Right(Free)
     def fromString(input: String): MembershipTier = input match
-      case "Trial" => Trial
+      case "Trial"   => Trial
       case "Premium" => Premium
-      case _ => Free
+      case _         => Free
     def makeString(tier: MembershipTier): String = tier match
-      case Trial => "Trial"
-      case Free => "Free"
+      case Trial   => "Trial"
+      case Free    => "Free"
       case Premium => "Premium"
 
   type Liked = NonNegInt
   object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax
 
   type Followers = NonNegInt
-  object Followers extends RefinedTypeOps[Followers, Int] with CatsRefinedTypeOpsSyntax
+  object Followers
+      extends RefinedTypeOps[Followers, Int]
+      with CatsRefinedTypeOpsSyntax
 
   type Following = NonNegInt
-  object Following extends RefinedTypeOps[Following, Int] with CatsRefinedTypeOpsSyntax
+  object Following
+      extends RefinedTypeOps[Following, Int]
+      with CatsRefinedTypeOpsSyntax
 
   type Biography = NonEmptyString
-  object Biography extends RefinedTypeOps[Biography, String] with CatsRefinedTypeOpsSyntax
+  object Biography
+      extends RefinedTypeOps[Biography, String]
+      with CatsRefinedTypeOpsSyntax
 
   object UserDto:
     import cats.syntax.EitherOps
     def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
-      val id = NanoIdUtils.randomNanoId()
+      val id           = NanoIdUtils.randomNanoId()
       val emailAddress = EmailAddress.validate(dto.email)
-      val email = (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
+      val email =
+        (emailAddress, EmailStatus.init.toEitherNec).parMapN(Email.apply)
 
       (
         UserId.from(id).toEitherNec,
         Username.validate(dto.name),
-        Biography.from(dto.bio).leftMap(_ => "Bio cannot be empty.").toEitherNec,
+        Biography
+          .from(dto.bio)
+          .leftMap(_ => "Bio cannot be empty.")
+          .toEitherNec,
         email,
         MembershipTier.init,
         Followers.from(0).toEitherNec,
@@ -133,43 +159,44 @@ object User:
         Liked.from(0).toEitherNec,
         JoinDate.create(LocalDate.now()),
         Articles.from(List())
-        ).parMapN(User.apply)
+      ).parMapN(User.apply)
 
   enum UpdateUser:
     case Name(name: String)
     case Email(email: String)
     case UpdateNameAndEmail(name: String, email: String)
 
-
   object UpdateUser:
     import cats.syntax.functor._
-    import io.circe.{ Decoder, Encoder }, io.circe.generic.auto._
+    import io.circe.{Decoder, Encoder}, io.circe.generic.auto._
     import io.circe.syntax._
     import monocle.Prism
     import monocle.macros.GenPrism
     import monocle.syntax.all.*
     import monocle.refined.all.*
 
-    def of(dto: UpdateUser, user: User): Either[NonEmptyChain[String], User] = dto match
-      case UpdateUser.UpdateNameAndEmail(name, email) =>
-        (
-          EmailAddress.validate(email),
-          Username.validate(name)
+    def of(dto: UpdateUser, user: User): Either[NonEmptyChain[String], User] =
+      dto match
+        case UpdateUser.UpdateNameAndEmail(name, email) =>
+          (
+            EmailAddress.validate(email),
+            Username.validate(name)
           )
-          .parMapN( (e, n) =>
-          user.focus(_.name).replace(n).focus(_.email.address).replace(e))
-      case UpdateUser.Name(n) =>
-        Username.validate(n).map(user.focus(_.name).replace)
-      case UpdateUser.Email(e) =>
-        EmailAddress.validate(e).map(user.focus(_.email.address).replace)
+            .parMapN((e, n) =>
+              user.focus(_.name).replace(n).focus(_.email.address).replace(e)
+            )
+        case UpdateUser.Name(n) =>
+          Username.validate(n).map(user.focus(_.name).replace)
+        case UpdateUser.Email(e) =>
+          EmailAddress.validate(e).map(user.focus(_.email.address).replace)
 
 //    val rawName: Prism[UpdateUser, UpdateName] = GenPrism[UpdateUser, UpdateName]
 
     object GenericDerivation {
       implicit val encodeEvent: Encoder[UpdateUser] = Encoder.instance {
-        case both @ UpdateNameAndEmail(_,_) => both.asJson
-        case email @ Email(_) => email.asJson
-        case name @ Name(_) => name.asJson
+        case both @ UpdateNameAndEmail(_, _) => both.asJson
+        case email @ Email(_)                => email.asJson
+        case name @ Name(_)                  => name.asJson
       }
 
       implicit val decodeEvent: Decoder[UpdateUser] =
@@ -178,4 +205,4 @@ object User:
           Decoder[Email].widen,
           Decoder[Name].widen
         ).reduceLeft(_ or _)
-  }
+    }
