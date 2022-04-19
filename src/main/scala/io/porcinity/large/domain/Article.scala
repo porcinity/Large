@@ -1,11 +1,9 @@
 package io.porcinity.large.domain
 
-import doobie.{Read, Write}
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
 
 import java.time.LocalDate
-import doobie.implicits.legacy.localdate.*
 import com.aventrix.jnanoid.jnanoid.*
 import cats.data.*
 import cats.implicits.*
@@ -24,8 +22,8 @@ import io.porcinity.large.common.{GetItem, GetItems}
 import org.latestbit.circe.adt.codec.JsonTaggedAdt
 
 object Article:
-  implicit val articleCodec: Codec[Article] = deriveCodec
-  implicit val getItemCodec: Codec[GetItem[Article]] = deriveCodec
+  implicit val articleCodec: Codec[Article]            = deriveCodec
+  implicit val getItemCodec: Codec[GetItem[Article]]   = deriveCodec
   implicit val getItemsCodec: Codec[GetItems[Article]] = deriveCodec
   implicit val likeArticleCodec: Codec[LikeArticleDto] = deriveCodec
 
