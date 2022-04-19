@@ -1,32 +1,18 @@
 package io.porcinity.large.api
 
-import cats.effect.kernel.Outcome.{Errored, Succeeded}
-import cats.effect.{Async, Concurrent, Deferred, Resource, Sync, Temporal}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.implicits.*
 import org.http4s.syntax.*
-import org.http4s.Status.{
-  BadRequest,
-  Created,
-  NoContent,
-  NotFound,
-  Ok,
-  UnprocessableEntity
-}
-import io.porcinity.large.domain.User.Codecs.*
+import org.http4s.Status.*
 import io.porcinity.large.domain.User.*
 import cats.Monad
 import cats.implicits.*
 import cats.data.Validated.Valid
-import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.Json
 import io.porcinity.large.domain.Article.ArticleDto
-import io.circe.syntax.*
 import monocle.syntax.all.*
-import monocle.refined.all.*
 import UpdateUser.GenericDerivation.*
 import io.porcinity.large.common.{GetItem, GetItems}
 import io.porcinity.large.persistence.{Articles, Users}
@@ -44,19 +30,19 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](
     case GET -> Root =>
       for {
         users <- repository.findAllUsers
-        res <- Ok(GetItems(users))
+        res   <- Ok(GetItems(users))
       } yield res
 
     case GET -> Root / UserIdVar(id) =>
       for {
-        u <- repository.findUserById(id)
+        u   <- repository.findUserById(id)
         res <- u.fold(NotFound())(x => Ok(GetItem(x)))
       } yield res
 
     case req @ POST -> Root =>
       for {
         dto <- req.asJsonDecode[UserDto]
-        u <- UserDto.toDomain(dto).pure[F]
+        u   <- UserDto.toDomain(dto).pure[F]
         res <- u.fold(
           e => UnprocessableEntity(GetItems(e.toList)),
           x => Ok(repository.create(x).map(GetItem.apply))
@@ -96,7 +82,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](
 
     case req @ POST -> Root / UserIdVar(id) / "addArticle" =>
       for {
-        dto <- req.asJsonDecode[ArticleDto]
+        dto     <- req.asJsonDecode[ArticleDto]
         article <- ArticleDto.toDomain(dto, id).pure[F]
         res <- article.fold(
           UnprocessableEntity(_),
@@ -106,7 +92,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](
 
     case req @ PUT -> Root / UserIdVar(id) =>
       for {
-        dto <- req.asJsonDecode[UpdateUser]
+        dto  <- req.asJsonDecode[UpdateUser]
         user <- repository.findUserById(id)
         res <- user.fold(NotFound())(u => {
           val up = UpdateUser.of(dto, u)
@@ -119,7 +105,7 @@ class UsersRoutes[F[_]: JsonDecoder: Monad](
 
     case DELETE -> Root / UserIdVar(id) =>
       for {
-        d <- repository.delete(id)
+        d   <- repository.delete(id)
         res <- d.fold(NotFound())(_ => NoContent())
       } yield res
   }
