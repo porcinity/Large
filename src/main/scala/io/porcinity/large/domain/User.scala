@@ -1,6 +1,5 @@
 package io.porcinity.large.domain
 
-import doobie.{Read, Write}
 import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import io.circe.syntax.*
@@ -19,14 +18,12 @@ import io.circe.refined._
 import io.porcinity.large.common.{GetItem, GetItems}
 
 object User:
-
-  object Codecs:
-    implicit val stringCodec: Codec[GetItems[String]]     = deriveCodec
-    implicit val GetItemCodec: Codec[GetItem[User]]       = deriveCodec
-    implicit val GetItemsCodec: Codec[GetItems[User]]     = deriveCodec
-    implicit val dtoCodec: Codec[UserDto]                 = deriveCodec
-    implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
-    implicit val listIdsCodec: Codec[GetItems[UserId]]    = deriveCodec
+  implicit val stringCodec: Codec[GetItems[String]]     = deriveCodec
+  implicit val GetItemCodec: Codec[GetItem[User]]       = deriveCodec
+  implicit val GetItemsCodec: Codec[GetItems[User]]     = deriveCodec
+  implicit val dtoCodec: Codec[UserDto]                 = deriveCodec
+  implicit val followUserDtoCodec: Codec[FollowUserDto] = deriveCodec
+  implicit val listIdsCodec: Codec[GetItems[UserId]]    = deriveCodec
 
   final case class FollowUserDto(asUser: UserId)
   final case class UserDto(name: String, bio: String, email: String)
