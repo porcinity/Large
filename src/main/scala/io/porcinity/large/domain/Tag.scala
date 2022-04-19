@@ -13,8 +13,8 @@ import cats.syntax.all.*
 import io.porcinity.large.common.{GetItem, GetItems}
 
 object Tag {
-  implicit val tagCodec: Codec[Tag] = deriveCodec
-  implicit val getItemCodec: Codec[GetItem[TagName]] = deriveCodec
+  implicit val tagCodec: Codec[Tag]                    = deriveCodec
+  implicit val getItemCodec: Codec[GetItem[TagName]]   = deriveCodec
   implicit val getItemsCodec: Codec[GetItems[TagName]] = deriveCodec
 
   final case class Tag(id: TagId, name: TagName, articleId: TaggedArticle)
