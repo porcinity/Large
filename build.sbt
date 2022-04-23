@@ -1,4 +1,4 @@
-lazy val scala3Version  = "3.1.1"
+lazy val scala3Version  = "3.1.2"
 lazy val DoobieVersion  = "1.0.0-RC1"
 lazy val CirceVersion   = "0.14.1"
 lazy val Http4sVersion  = "0.23.11"
@@ -7,6 +7,8 @@ lazy val LogbackVersion = "1.2.11"
 lazy val MonocleVersion = "3.1.0"
 lazy val RefinedVersion = "0.9.28"
 lazy val SkunkVersion   = "0.3.1"
+
+Global / semanticdbEnabled := true
 
 lazy val root = project
   .in(file("."))
