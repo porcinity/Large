@@ -80,12 +80,14 @@ object User:
     case Unverified
 
   object EmailStatus:
-    def fromString(x: String): EmailStatus = x match
+    def fromString(x: String): EmailStatus = x match {
       case "Verified" => EmailStatus.Verified
       case _          => EmailStatus.Unverified
-    def makeString(vs: EmailStatus): String = vs match
+    }
+    def makeString(vs: EmailStatus): String = vs match {
       case Verified   => "Verified"
       case Unverified => "Unverified"
+    }
     def init: Either[String, EmailStatus] = Right(Unverified)
 
   final case class Email(address: EmailAddress, status: EmailStatus)
@@ -107,14 +109,17 @@ object User:
 
   object MembershipTier:
     val init: Either[NonEmptyChain[String], MembershipTier] = Right(Free)
-    def fromString(input: String): MembershipTier = input match
+    def fromString(input: String): MembershipTier = input match {
       case "Trial"   => Trial
       case "Premium" => Premium
       case _         => Free
-    def makeString(tier: MembershipTier): String = tier match
+    }
+
+    def makeString(tier: MembershipTier): String = tier match {
       case Trial   => "Trial"
       case Free    => "Free"
       case Premium => "Premium"
+    }
 
   type Liked = NonNegInt
   object Liked extends RefinedTypeOps[Liked, Int] with CatsRefinedTypeOpsSyntax
@@ -136,7 +141,7 @@ object User:
 
   object UserDto:
     import cats.syntax.EitherOps
-    def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] =
+    def toDomain(dto: UserDto): Either[NonEmptyChain[String], User] = {
       val id           = NanoIdUtils.randomNanoId()
       val emailAddress = EmailAddress.validate(dto.email)
       val email =
@@ -157,8 +162,9 @@ object User:
         JoinDate.create(LocalDate.now()),
         Articles.from(List())
       ).parMapN(User.apply)
+    }
 
-  enum UpdateUser:
+  enum UpdateUser: 
     case Name(name: String)
     case Email(email: String)
     case UpdateNameAndEmail(name: String, email: String)
