@@ -20,9 +20,9 @@ object Main extends IOApp:
       database = "Large"
     )
 
-    val userRepo = Users.make[IO](session)
+    val userRepo    = Users.make[IO](session)
     val articleRepo = Articles.make[IO](session)
-    val tagsRepo = Tags.make[IO](session)
+    val tagsRepo    = Tags.make[IO](session)
 
     val articleService: ArticlesRoutes[IO] = new ArticlesRoutes[IO](articleRepo)
     val userService: UsersRoutes[IO] =
@@ -31,8 +31,8 @@ object Main extends IOApp:
 
     val httpApp = Router(
       "api/articles" -> articleService.routes,
-      "api/users" -> userService.routes,
-      "api/tags" -> tagsService.routes
+      "api/users"    -> userService.routes,
+      "api/tags"     -> tagsService.routes
     ).orNotFound
 
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
