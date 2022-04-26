@@ -10,6 +10,7 @@ Featuring:
 - Refined Types
 - Http4s
 - Skunk
+- Circe
 
 ## Resources
 
