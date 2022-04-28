@@ -9,7 +9,7 @@ import eu.timepit.refined.boolean.And
 import eu.timepit.refined.string.MatchesRegex
 import eu.timepit.refined.types.numeric.*
 import cats.data.*
-import cats.implicits.*
+import cats.syntax.all.*
 import eu.timepit.refined.api.*
 import eu.timepit.refined.cats.CatsRefinedTypeOpsSyntax
 import eu.timepit.refined.types.string.{NonEmptyFiniteString, NonEmptyString}
@@ -164,7 +164,7 @@ object User:
       ).parMapN(User.apply)
     }
 
-  enum UpdateUser: 
+  enum UpdateUser:
     case Name(name: String)
     case Email(email: String)
     case UpdateNameAndEmail(name: String, email: String)

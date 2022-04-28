@@ -2,11 +2,13 @@ package io.porcinity.large.api
 
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
+// import org.http4s.circe.{jsonDecoder, JsonDecoder}
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.Status.*
 import io.porcinity.large.domain.User.*
 import cats.Monad
+// import cats.syntax.all.{toFunctorOps, toFlatMapOps, catsSyntaxApplicativeId, toFoldableOps}
 import cats.syntax.all.*
 import cats.data.Validated.Valid
 import io.porcinity.large.domain.Article.ArticleDto
