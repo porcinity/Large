@@ -10,7 +10,6 @@ import skunk.Session
 import natchez.Trace.Implicits.noop
 import com.comcast.ip4s.{ipv4, port}
 
-//
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     val session = Session.single[IO](
