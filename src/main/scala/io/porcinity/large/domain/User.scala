@@ -4,7 +4,7 @@ import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveCodec, deriveDecoder}
 import io.circe.syntax.*
 import java.time.LocalDate
-import com.aventrix.jnanoid.jnanoid.*
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import eu.timepit.refined.boolean.And
 import eu.timepit.refined.string.MatchesRegex
 import eu.timepit.refined.types.numeric.*

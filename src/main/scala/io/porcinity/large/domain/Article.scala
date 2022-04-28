@@ -97,8 +97,11 @@ object Article:
   object Likes extends RefinedTypeOps[Likes, Int] with CatsRefinedTypeOpsSyntax
 
   opaque type ArticleDate = LocalDate
+
   object ArticleDate:
+
     def apply(date: LocalDate): ArticleDate = date
+
     val create: Either[NonEmptyChain[String], ArticleDate] =
       Right(LocalDate.now())
     extension (x: ArticleDate) def value: LocalDate = x
@@ -108,10 +111,13 @@ object Article:
       content: String,
       visibility: String
   )
+
   final case class LikeArticleDto(asUser: User.UserId)
 
   object ArticleDto:
+
     implicit val articleDtoCodec: Codec[ArticleDto] = deriveCodec
+
     def toDomain(
         dto: ArticleDto,
         author: User.UserId
