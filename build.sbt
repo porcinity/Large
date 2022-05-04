@@ -8,8 +8,6 @@ lazy val MonocleVersion = "3.1.0"
 lazy val RefinedVersion = "0.9.28"
 lazy val SkunkVersion   = "0.3.1"
 
-/* Global / semanticdbEnabled := true */
-
 lazy val root = project
   .in(file("."))
   .settings(
@@ -17,9 +15,6 @@ lazy val root = project
     version              := "0.1.0-SNAPSHOT",
     cancelable in Global := true,
     scalaVersion         := scala3Version,
-    scalacOptions ++= Seq(
-      "-Yrangepos"
-    ),
     libraryDependencies ++= Seq(
       "com.github.sbt"         % "junit-interface"        % JUnitVersion % Test,
       "org.http4s"            %% "http4s-ember-server"    % Http4sVersion,
