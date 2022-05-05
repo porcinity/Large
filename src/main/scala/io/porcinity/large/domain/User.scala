@@ -96,8 +96,7 @@ object User:
 
   object JoinDate:
     def apply(date: LocalDate): JoinDate = date
-    def create(date: LocalDate): EitherNec[String, LocalDate] = date match
-      case _ => Right(date)
+    def create(date: LocalDate): EitherNec[String, LocalDate] = date.rightNec
     extension (x: JoinDate) def value: LocalDate = x
 
   enum MembershipTier
